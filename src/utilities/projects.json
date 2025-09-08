@@ -1,0 +1,294 @@
+{
+    "projects": [
+        {
+            "id": "5mc",
+            "name": "5 Minutes Crafts",
+            "templates": [
+                {
+                    "id": "2-images-2-text",
+                    "name": "2 images, 2 text",
+                    "preview": "/images/projects/5mc/2-images-2-text.jpg",
+                    "layers": [
+                        {
+                            "name": "left-image",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "children": [
+                                {
+                                    "name": "left-image",
+                                    "type": "image",
+                                    "src": "",
+                                    "variants": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "right-image",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "children": [
+                                {
+                                    "name": "right-image",
+                                    "type": "image",
+                                    "src": "",
+                                    "variants": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "left-text",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 100,
+                                "unit": "pixels"
+                            },
+                            "children": [
+                                {
+                                    "name": "left-text",
+                                    "type": "text",
+                                    "content": "Sample Text"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "right-text",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 100,
+                                "unit": "pixels"
+                            },
+                            "children": [
+                                {
+                                    "name": "right-text",
+                                    "type": "text",
+                                    "content": "Sample Text"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "line",
+                            "type": "shape",
+                            "color": "#ffffff",
+                            "x": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 10,
+                                "unit": "pixels"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "offset": {
+                                "x": {
+                                    "value": 0.5,
+                                    "unit": "percent"
+                                },
+                                "y": {
+                                    "value": 0,
+                                    "unit": "percent"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "2-images",
+                    "name": "2 images",
+                    "preview": "/images/projects/5mc/2-images.jpg",
+                    "layers": [
+                        {
+                            "name": "left-image",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "children": [
+                                {
+                                    "name": "left-image",
+                                    "type": "image",
+                                    "src": "",
+                                    "variants": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "right-image",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "children": [
+                                {
+                                    "name": "right-image",
+                                    "type": "image",
+                                    "src": "",
+                                    "variants": []
+                                }
+                            ]
+                        },
+                        {
+                            "name": "line",
+                            "type": "shape",
+                            "color": "#ffffff",
+                            "x": {
+                                "value": 0.5,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 10,
+                                "unit": "pixels"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "offset": {
+                                "x": {
+                                    "value": 0.5,
+                                    "unit": "percent"
+                                },
+                                "y": {
+                                    "value": 0,
+                                    "unit": "percent"
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    "id": "1-image",
+                    "name": "1 image",
+                    "preview": "/images/projects/5mc/1-image.jpg",
+                    "layers": [
+                        {
+                            "name": "image",
+                            "type": "group",
+                            "image": "",
+                            "x": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "y": {
+                                "value": 0,
+                                "unit": "percent"
+                            },
+                            "width": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "height": {
+                                "value": 1,
+                                "unit": "percent"
+                            },
+                            "children": [
+                                {
+                                    "name": "image",
+                                    "type": "image",
+                                    "src": "",
+                                    "variants": []
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
