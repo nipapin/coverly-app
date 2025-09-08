@@ -1,138 +1,171 @@
-import { useGenerationModel } from "@/app/hooks/useGenerationModel";
 import { useStage } from "@/app/hooks/useStage";
 import { useUtils } from "@/app/hooks/useUtils";
-import { useLayoutStore } from "@/app/stores/LayoutStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
 import { AutoAwesome } from "@mui/icons-material";
-import { Button, Card, CardActions, CircularProgress } from "@mui/material";
+import { Alert, Button, Card, CardActions, CircularProgress, Snackbar } from "@mui/material";
 import { useState } from "react";
 import ImageCardContent from "./ImageCardContent";
 import ImageCardHeader from "./ImageCardHeader";
 
 export default function ImageCard({ layer }) {
-  const { sendRequest } = useGenerationModel();
-  const { layout } = useLayoutStore();
-  const { calculateGaps } = useUtils();
-  const { getLayer } = useStage();
-  const { template, setTemplate } = useTemplateStore();
-  const [pending, setPending] = useState(false);
-  const firstVariant = layer.variants[0];
-  if (!firstVariant) return null;
+	const [open, setOpen] = useState(false);
+	const [severity, setSeverity] = useState("success");
+	const [message, setMessage] = useState("");
+	const { calculateGaps } = useUtils();
+	const { getLayer } = useStage();
+	const { template, setTemplate } = useTemplateStore();
+	const [pending, setPending] = useState(false);
+	const firstVariant = layer.variants[0];
+	if (!firstVariant) return null;
 
-  const drawPreview = (rect, color) => {
-    const area = document.createElement("div");
-    area.className = "preview-area";
-    area.style.position = "absolute";
-    area.style.zIndex = "10000";
-    area.style.left = `${rect.x}px`;
-    area.style.top = `${rect.y}px`;
-    area.style.width = `${rect.width}px`;
-    area.style.height = `${rect.height}px`;
-    area.style.border = `1px solid ${color}`;
-    document.body.appendChild(area);
-  };
+	const generate = async (src, prompt) => {
+		const response = await fetch(`/api/generate/gemini`, {
+			method: "POST",
+			body: JSON.stringify({ src, prompt })
+		});
 
-  const handleGenerate = async (event) => {
-    event.preventDefault();
-    setPending(true);
-    const formData = new FormData(event.target);
-    const prompt = formData.get("prompt");
+		if (!response.ok) {
+			setOpen(true);
+			setSeverity("error");
+			setMessage("Error generating image");
+			setPending(false);
+			return null;
+		}
 
-    const previewAreas = document.querySelectorAll(".preview-area");
-    previewAreas.forEach((area) => area.remove());
+		return await response.json();
+	};
 
-    const group = getLayer(layer.name);
-    const source = group.children[0];
+	const outpaint = async (src, transform) => {
+		const response = await fetch(`/api/outpaint/gemini`, {
+			method: "POST",
+			body: JSON.stringify({ src, transform })
+		});
+		if (!response.ok) {
+			setOpen(true);
+			setSeverity("error");
+			setMessage("Error outpainting image");
+			setPending(false);
+			return null;
+		}
+		return await response.json();
+	};
 
-    const groupTransform = {
-      x: group.getAbsolutePosition().x,
-      y: group.getAbsolutePosition().y,
-      width: group.getAttrs().width * group.getAbsoluteScale().x,
-      height: group.getAttrs().height * group.getAbsoluteScale().y,
-    };
+	const handleGenerate = async (event) => {
+		event.preventDefault();
+		setPending(true);
+		const formData = new FormData(event.target);
+		const prompt = formData.get("prompt");
 
-    const sourceTransform = {
-      x: source.getClientRect().x,
-      y: source.getClientRect().y,
-      width: source.getClientRect().width,
-      height: source.getClientRect().height,
-    };
-    const { gaps, needsFilling } = calculateGaps(groupTransform, sourceTransform);
+		const group = getLayer(layer.name);
+		const source = group.children[0];
 
-    // drawPreview(groupTransform, "red");
-    // drawPreview(sourceTransform, "blue");
+		const groupTransform = {
+			x: group.getAbsolutePosition().x,
+			y: group.getAbsolutePosition().y,
+			width: group.getAttrs().width * group.getAbsoluteScale().x,
+			height: group.getAttrs().height * group.getAbsoluteScale().y
+		};
 
-    /*
-    1. Generate image via model
-    2. if its need filling fill image
-    3. load image into variants if its need filling reset transform, otherwise use selected transform
-    */
+		const sourceTransform = {
+			x: source.getClientRect().x,
+			y: source.getClientRect().y,
+			width: source.getClientRect().width,
+			height: source.getClientRect().height
+		};
+		const { needsFilling } = calculateGaps(groupTransform, sourceTransform);
 
-    const response = await fetch(`/api/generate/gemini`, {
-      method: "POST",
-      body: JSON.stringify({
-        src: layer.src,
-        prompt,
-      }),
-    });
-    if (!response.ok) {
-      console.log(response);
-      setPending(false);
-      return;
-    }
-    const responseData = await response.json();
-    console.log(responseData);
+		if (needsFilling) {
+			setOpen(true);
+			setSeverity("info");
+			setMessage("Generating image...");
+			const generated = await generate(layer.src, prompt);
+			if (!generated) {
+				setPending(false);
+				return;
+			}
+			setOpen(false);
+			setOpen(true);
+			setSeverity("info");
+			setMessage("Outpainting image...");
+			const outpainted = await outpaint(generated.src, { groupTransform, sourceTransform });
+			if (!outpainted) {
+				return;
+			}
+			const modifiedTemplate = {
+				...template,
+				layers: template.layers.map((templateLayer) => {
+					if (templateLayer.name === layer.name) {
+						return {
+							...templateLayer,
+							children: templateLayer.children.map((child) =>
+								child.type === "image"
+									? {
+											...child,
+											variants: [...child.variants, ...outpainted.data.map((src) => ({ src, transform: null }))]
+									  }
+									: child
+							)
+						};
+					}
+					return templateLayer;
+				})
+			};
+			setOpen(false);
+			setOpen(true);
+			setSeverity("success");
+			setMessage("Outpainting image success");
+			setTemplate(modifiedTemplate);
+			setPending(false);
+			return;
+		} else {
+			setOpen(true);
+			setSeverity("info");
+			setMessage("Generating image...");
+			const generated = await generate(layer.src, prompt);
+			if (!generated) {
+				setPending(false);
+				return;
+			}
+			setOpen(false);
+			setOpen(true);
+			setSeverity("success");
+			setMessage("Generating image success");
+			const modifiedTemplate = {
+				...template,
+				layers: template.layers.map((templateLayer) => {
+					if (templateLayer.name === layer.name) {
+						return {
+							...templateLayer,
+							children: templateLayer.children.map((child) =>
+								child.type === "image"
+									? {
+											...child,
+											variants: [...child.variants, { src: generated.src, transform: child.variants[0].transform }]
+									  }
+									: child
+							)
+						};
+					}
+					return templateLayer;
+				})
+			};
+			setTemplate(modifiedTemplate);
+			setPending(false);
+		}
+	};
 
-    if (needsFilling) {
-    } else {
-      console.log("sendRequest", "generate", layer.src, prompt);
-      console.log("add result to template with transform");
-    }
-
-    setPending(false);
-    return;
-    const data = await sendRequest(layer.src, prompt);
-    const modifiedTemplate = {
-      ...template,
-      layers: template.layers.map((templateLayer) => {
-        if (templateLayer.name === layer.name) {
-          return {
-            ...templateLayer,
-            children: templateLayer.children.map((child) =>
-              child.type === "image"
-                ? {
-                    ...child,
-                    variants: [
-                      ...child.variants,
-                      { src: data.src, transform: child.variants[0].transform },
-                    ],
-                  }
-                : child
-            ),
-          };
-        }
-        return templateLayer;
-      }),
-    };
-    setTemplate(modifiedTemplate);
-    setPending(false);
-  };
-
-  return (
-    <Card component={"form"} onSubmit={handleGenerate}>
-      <ImageCardHeader src={firstVariant.src} name={layer.name} count={layer.variants.length} />
-      <ImageCardContent variants={layer.variants} src={firstVariant.src} name={layer.name} />
-      <CardActions>
-        <Button
-          variant="contained"
-          startIcon={pending ? <CircularProgress size={16} /> : <AutoAwesome />}
-          fullWidth
-          type="submit"
-          disabled={pending}
-        >
-          Generate
-        </Button>
-      </CardActions>
-    </Card>
-  );
+	return (
+		<Card component={"form"} onSubmit={handleGenerate}>
+			<ImageCardHeader src={firstVariant.src} name={layer.name} count={layer.variants.length} />
+			<ImageCardContent variants={layer.variants} src={firstVariant.src} name={layer.name} />
+			<CardActions>
+				<Button variant='contained' startIcon={pending ? <CircularProgress size={16} /> : <AutoAwesome />} fullWidth type='submit' disabled={pending}>
+					Generate
+				</Button>
+			</CardActions>
+			<Snackbar open={open} onClose={() => setOpen(false)} autoHideDuration={3000}>
+				<Alert severity={severity}>{message}</Alert>
+			</Snackbar>
+		</Card>
+	);
 }
