@@ -1,36 +1,28 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect } from "react";
+import { useLayoutStore } from "../stores/LayoutStore";
+import { useDroplets } from "./useDroplets";
 
-export function useDragAndDrop(stageRef, layout) {
-	const [droplets, setDroplets] = useState([]);
+export function useDragAndDrop() {
+  const { createDroplets } = useDroplets();
+  const { layout } = useLayoutStore();
 
-	const createDroplets = useCallback(() => {
-		if (!stageRef.current) return;
-		const stage = stageRef.current;
-		const placeholders = stage.find((node) => node.name().includes("placeholder"));
-		const rects = placeholders.map((placeholder) => {
-			const shape = placeholder.children[0];
-			return { rect: shape.getClientRect(), name: placeholder.name() };
-		});
-		setDroplets(rects);
-	}, [stageRef]);
+  useEffect(() => {
+    const timeout = setTimeout(createDroplets, 50);
+    return () => clearTimeout(timeout);
+  }, [layout, createDroplets]);
 
-	useEffect(() => {
-		const timeout = setTimeout(createDroplets, 50);
-		return () => clearTimeout(timeout);
-	}, [layout, createDroplets]);
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    createDroplets();
+  };
 
-	const handleDragEnter = (e) => {
-		e.preventDefault();
-		createDroplets();
-	};
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
 
-	const handleDragOver = (e) => {
-		e.preventDefault();
-	};
+  const handleDrop = (e) => {
+    e.preventDefault();
+  };
 
-	const handleDrop = (e) => {
-		e.preventDefault();
-	};
-
-	return { droplets, handleDragEnter, handleDragOver, handleDrop };
+  return { handleDragEnter, handleDragOver, handleDrop };
 }

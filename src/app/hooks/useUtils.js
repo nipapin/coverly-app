@@ -1,28 +1,31 @@
 export function useUtils() {
-	function calculateGaps(canvas, image) {
-		const displayedWidth = image.width;
-		const displayedHeight = image.height;
+  const resetDimensions = (parent, child) => {
+    return {
+      parent: { ...parent, x: 0, y: 0 },
+      child: { ...child, x: child.x - parent.x, y: child.y - parent.y },
+    };
+  };
 
-		const imageRight = image.x + displayedWidth;
-		const imageBottom = image.y + displayedHeight;
+  function calculateGaps(canvas, image) {
+    const reseted = resetDimensions(canvas, image);
+    const displayedWidth = image.width;
+    const displayedHeight = image.height;
 
-		// Считаем зазоры. Math.max(0, ...) гарантирует, что мы не получим отрицательное значение,
-		// если изображение выходит за пределы холста.
-		const gaps = {
-			top: Math.max(0, image.y),
-			bottom: Math.max(0, canvas.height - imageBottom),
-			left: Math.max(0, image.x),
-			right: Math.max(0, canvas.width - imageRight)
-		};
+    const imageRight = reseted.child.x + displayedWidth;
+    const imageBottom = reseted.child.y + displayedHeight;
 
-		// Флаг, который показывает, нужно ли вообще что-то дорисовывать.
-		const needsFilling = gaps.top > 0 || gaps.bottom > 0 || gaps.left > 0 || gaps.right > 0;
+    const gaps = {
+      top: Math.max(0, reseted.child.y),
+      bottom: Math.max(0, reseted.parent.height - imageBottom),
+      left: Math.max(0, reseted.child.x),
+      right: Math.max(0, reseted.parent.width - imageRight),
+    };
 
-		return {
-			gaps,
-			needsFilling
-		};
-	}
+    return {
+      gaps,
+      needsFilling: gaps.top > 0 || gaps.bottom > 0 || gaps.left > 0 || gaps.right > 0,
+    };
+  }
 
-	return { calculateGaps };
+  return { calculateGaps };
 }

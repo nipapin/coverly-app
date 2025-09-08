@@ -1,5 +1,4 @@
 import { useLayoutStore } from "@/app/stores/LayoutStore";
-import { themeConfig } from "@/theme/themeConfig";
 import { useEffect, useRef } from "react";
 import { Group, Rect, Text } from "react-konva";
 
