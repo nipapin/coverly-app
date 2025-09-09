@@ -6,12 +6,23 @@ import LayerView from "./LayerView";
 export default function TemplateView() {
 	const { template } = useTemplateStore();
 	const { layout } = useLayoutStore();
+
+	const centerX = layout.stage.width * 0.5;
+	const centerY = layout.stage.height * 0.5;
+
+	// Если template еще не загружен, не рендерим ничего
+	if (!template || !template.layers) {
+		return null;
+	}
+
 	return (
 		<Layer
-			x={window.innerWidth * 0.5}
-			y={window.innerHeight * 0.5}
-			scale={{ x: layout.stage.scale, y: layout.stage.scale }}
-			offset={{ x: layout.stage.width * 0.5, y: layout.stage.height * 0.5 }}
+			x={centerX}
+			y={centerY}
+			scaleX={layout.stage.scale}
+			scaleY={layout.stage.scale}
+			offsetX={layout.stage.width * 0.5}
+			offsetY={layout.stage.height * 0.5}
 			name='TemplateView'
 		>
 			<Rect fill={"#0B2545"} x={0} y={0} width={layout.stage.width} height={layout.stage.height} />

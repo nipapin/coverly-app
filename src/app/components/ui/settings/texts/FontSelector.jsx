@@ -12,8 +12,11 @@ export default function FontSelector() {
 	};
 
 	useEffect(() => {
+		if (!fonts) return;
 		setFont(fonts[0].fontFamily);
 	}, [fonts]);
+
+	if (!fonts) return null;
 
 	return (
 		<Box>

@@ -37,6 +37,7 @@ export const useFonts = () => {
 	const fonts = template.fonts;
 
 	const initializeFonts = () => {
+		if (!fonts) return;
 		Promise.all(fonts.map(loadFont)).catch(console.error);
 	};
 

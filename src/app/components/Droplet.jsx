@@ -5,6 +5,7 @@ import { useStageStore } from "../stores/StageStore";
 import { useTemplateStore } from "../stores/TemplateStore";
 
 export default function Droplet({ droplet }) {
+	console.log("Droplet", droplet);
 	const [isVisible, setIsVisible] = useState(false);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const { images, setImages } = useImagesStore();
@@ -89,18 +90,19 @@ export default function Droplet({ droplet }) {
 		inputRef.current.value = null;
 	}, [resetDroplets]);
 
+	const style = {
+		display: isLoaded ? "none" : "block",
+		opacity: isVisible ? 1 : 0,
+		left: `${droplet.rect.x}px`,
+		top: `${droplet.rect.y}px`,
+		width: `${droplet.rect.width}px`,
+		height: `${droplet.rect.height}px`
+	};
+
 	return (
 		<div
 			className='droplet'
-			style={{
-				display: isLoaded ? "none" : "block",
-				opacity: isVisible ? 1 : 0,
-				left: `${droplet.rect.x}px`,
-				top: `${droplet.rect.y}px`,
-				width: `${droplet.rect.width}px`,
-				height: `${droplet.rect.height}px`,
-				// transform: "translate(-50%, -50%)"
-			}}
+			style={style}
 			onMouseEnter={handleDragEnter}
 			onMouseLeave={handleDragLeave}
 			onDragEnter={handleDragEnter}

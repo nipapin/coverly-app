@@ -1,44 +1,3 @@
-// import { useDroplets } from "@/app/hooks/useDroplets";
-// import { useLayoutStore } from "@/app/stores/LayoutStore";
-// import { useEffect, useRef } from "react";
-// import { Group, Rect, Text } from "react-konva";
-
-// export default function NoImageView({ item }) {
-// 	const rectRef = useRef(null);
-// 	const textRef = useRef(null);
-// 	const groupRef = useRef(null);
-// 	const { layout } = useLayoutStore();
-// 	const { createDroplets } = useDroplets();
-
-// 	useEffect(() => {
-// 		if (!rectRef.current || !layout || !textRef.current) {
-// 			return;
-// 		}
-// 		const stage = groupRef.current.getStage();
-// 		const parent = groupRef.current.getParent();
-// 		const x = parent.getAttr("width") * 0.5;
-// 		const y = parent.getAttr("height") * 0.5;
-// 		const text = groupRef.current.findOne((node) => node.name() === "text");
-// 		const textWidth = text.width();
-// 		const textHeight = text.height();
-// 		const groupAttrs = { x, y, width: 300, height: 300, offsetX: 300 * 0.5, offsetY: 300 * 0.5 };
-// 		const textAttrs = { x: 300 * 0.5, y: 300 * 0.5, offsetX: textWidth * 0.5, offsetY: textHeight * 0.5 };
-
-// 		groupRef.current.setAttrs(groupAttrs);
-// 		textRef.current.setAttrs(textAttrs);
-// 		createDroplets();
-
-// 		stage.batchDraw();
-// 	}, [layout, rectRef.current, textRef.current]);
-
-// 	return (
-// 		<Group key={item.name} ref={groupRef} name={`${item.name}-placeholder`}>
-// 			<Rect width={300} height={300} ref={rectRef} name={"rect"} />
-// 			<Text text={"No image"} fontSize={20} fontWeight={600} fill={"white"} ref={textRef} name={"text"} />
-// 		</Group>
-// 	);
-// }
-
 import { useDroplets } from "@/app/hooks/useDroplets";
 import { useLayoutStore } from "@/app/stores/LayoutStore";
 import { useEffect, useRef, useCallback, useMemo } from "react";
@@ -77,8 +36,7 @@ export default function NoImageView({ item }) {
 	const { layout } = useLayoutStore();
 	const { createDroplets } = useDroplets();
 
-	// Memoize positioning logic
-	const positioningData = useMemo(() => {
+	const positioningData = useCallback(() => {
 		if (!groupRef.current || !layout) return null;
 
 		const stage = groupRef.current.getStage();
@@ -92,14 +50,11 @@ export default function NoImageView({ item }) {
 			stage,
 			parent
 		};
-	}, [layout]);
+	}, [groupRef.current, layout]);
 
-	// Separate function for positioning
 	const positionElements = useCallback(() => {
-		if (!positioningData || !groupRef.current) return;
-
-		const { x, y, stage } = positioningData;
-
+		if (!groupRef.current) return;
+		const { x, y, stage } = positioningData();
 		const groupAttrs = {
 			x,
 			y,
@@ -113,19 +68,13 @@ export default function NoImageView({ item }) {
 		stage.batchDraw();
 	}, [positioningData]);
 
-	// Separate function for droplet creation
-	const handleDropletCreation = useCallback(() => {
-		if (positioningData) {
-			createDroplets();
-		}
-	}, [positioningData, createDroplets]);
-
 	useEffect(() => {
-		positionElements();
-		handleDropletCreation();
-	}, [positionElements, handleDropletCreation]);
+		setTimeout(() => {
+			positionElements();
+			createDroplets();
+		}, 150);
+	}, []);
 
-	// Memoize the component name
 	const componentName = useMemo(() => `${item.name}-placeholder`, [item.name]);
 
 	return (

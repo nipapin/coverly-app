@@ -8,9 +8,9 @@ export default function Droplets() {
 
 	return (
 		<>
-			{droplets.map((droplet, index) => (
-				<Droplet key={index} droplet={droplet} onDragOver={handleDragOver} onDrop={handleDrop} />
-			))}
+			{droplets.map((droplet, index) => {
+				return <Droplet key={index} droplet={droplet} onDragOver={handleDragOver} onDrop={handleDrop} />;
+			})}
 		</>
 	);
 }

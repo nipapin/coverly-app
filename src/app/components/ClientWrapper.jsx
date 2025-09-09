@@ -1,17 +1,31 @@
 "use client";
 
+import { CircularProgress, Dialog } from "@mui/material";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
-import { useTemplateStore } from "@/app/stores/TemplateStore";
+import { useEffect, useState } from "react";
 
 const MainCanvas = dynamic(() => import("./MainCanvas"), { ssr: false });
 
-export default function ClientWrapper({ template }) {
-	const { setTemplate } = useTemplateStore();
+export default function ClientWrapper() {
+	const [pending, setPending] = useState(true);
 
 	useEffect(() => {
-		setTemplate(template);
-	}, [template]);
+		setTimeout(() => {
+			setPending(false);
+		}, 1000);
+	}, []);
 
-	return <MainCanvas />;
+	return (
+		<>
+			<Dialog
+				open={pending}
+				onClose={() => setPending(false)}
+				fullScreen
+				slotProps={{ paper: { elevation: 0, sx: { display: "flex", justifyContent: "center", alignItems: "center" } } }}
+			>
+				<CircularProgress />
+			</Dialog>
+			<MainCanvas />
+		</>
+	);
 }
