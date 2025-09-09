@@ -1,6 +1,5 @@
 "use client";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 
 function Loading({ children, template }) {
