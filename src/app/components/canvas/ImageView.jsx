@@ -58,7 +58,7 @@ export default function ImageView({ item }) {
 		imageRef.current.getLayer().batchDraw();
 	}, [imageSource, item.src]);
 
-	return imageSource ? (
+	return imageSource && item.src ? (
 		<>
 			<Image ref={imageRef} onClick={handleClick} image={imageSource} onDragEnd={handleTransformEnd} />
 		</>

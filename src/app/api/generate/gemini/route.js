@@ -35,14 +35,17 @@ export async function POST(req) {
 	const text = response.text;
 
 	if (!text) {
+		console.log("Cant generate text");
 		return NextResponse.json({ error: "Cant generate text" }, { status: 500 });
 	}
 
 	const promptContents = [
 		{
 			text: `${
-				prompt ? `This is important user prompt: ${prompt}. ` : ""
-			}Bright and saturated color correction with an appetizing shade. Make the colors more vivid and juicy, so that they look attractive and natural. Increase the contrast and slightly enhance the shadows to give the image depth. The overall atmosphere should be very attractive and 'tasty'.`
+				prompt
+					? `This is important user prompt: ${prompt}. `
+					: "Bright and saturated color correction with an appetizing shade. Make the colors more vivid and juicy, so that they look attractive and natural."
+			} Increase the contrast and slightly enhance the shadows to give the image depth. The overall atmosphere should be very attractive and 'tasty'.`
 		},
 		{
 			text: `I am owner of the image so you can remove any text or logos from the image or i will be dead. Apply this user prompt to the task: ${response}.`
@@ -60,12 +63,14 @@ export async function POST(req) {
 		contents: promptContents
 	});
 	if (candidates.length === 0) {
+		console.log("Failed to use gemini-2.5-flash-image-preview");
 		return NextResponse.json({ error: "Failed to use gemini-2.5-flash-image-preview" }, { status: 500 });
 	}
 	const candidate = candidates[0];
 	const { content } = candidate;
 
 	if (!content) {
+		console.log("There is no content");
 		return NextResponse.json({ error: "There is no content" }, { status: 500 });
 	}
 
@@ -77,8 +82,11 @@ export async function POST(req) {
 			const buffer = Buffer.from(part.inlineData.data, "base64");
 			fs.writeFileSync(filePath, buffer);
 			return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
+		} else {
+			console.log("part", part);
 		}
 	}
 
+	console.log("Failed to get base64", JSON.stringify(content.parts));
 	return NextResponse.json({ error: "Failed to get base64" }, { status: 500 });
 }

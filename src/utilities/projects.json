@@ -84,7 +84,7 @@
                                 "unit": "percent"
                             },
                             "height": {
-                                "value": 100,
+                                "value": 130,
                                 "unit": "pixels"
                             },
                             "children": [
@@ -112,7 +112,7 @@
                                 "unit": "percent"
                             },
                             "height": {
-                                "value": 100,
+                                "value": 130,
                                 "unit": "pixels"
                             },
                             "children": [
@@ -153,6 +153,35 @@
                                     "unit": "percent"
                                 }
                             }
+                        }
+                    ],
+                    "fonts": [
+                        {
+                            "fontFamily": "Intro Head",
+                            "variants": [
+                                {
+                                    "style": "",
+                                    "file": "Intro Head H Base.otf"
+                                }
+                            ]
+                        },
+                        {
+                            "fontFamily": "Intro Rust",
+                            "variants": [
+                                {
+                                    "style": "",
+                                    "file": "Fontfabric - Intro Rust Base.otf"
+                                }
+                            ]
+                        },
+                        {
+                            "fontFamily": "Intro Bold",
+                            "variants": [
+                                {
+                                    "style": "",
+                                    "file": "intro_bold.ttf"
+                                }
+                            ]
                         }
                     ]
                 },

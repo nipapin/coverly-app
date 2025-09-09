@@ -13,9 +13,5 @@ export default function ClientWrapper({ template }) {
 		setTemplate(template);
 	}, [template]);
 
-	return (
-		<>
-			<MainCanvas />
-		</>
-	);
+	return <MainCanvas />;
 }
