@@ -38,6 +38,7 @@ export default function Droplet({ droplet }) {
 		});
 
 		const data = await res.json();
+		console.log(data);
 		const dropletLayer = stage.findOne((node) => node.name() === droplet.name);
 		const parent = dropletLayer.getParent();
 		const name = parent.name();

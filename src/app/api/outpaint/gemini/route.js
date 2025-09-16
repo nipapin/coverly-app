@@ -71,7 +71,7 @@ class ImageOutpainter {
 	}
 
 	async createCanvas() {
-		const inputImagePath = path.join(process.cwd(), "public", this.inputImagePath);
+		const inputImagePath = path.join(process.cwd(), this.inputImagePath);
 		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).toBuffer();
 		const canvasBuffer = await sharp({
 			create: { width: this.resultCanvasSize.width, height: this.resultCanvasSize.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } }
@@ -150,7 +150,7 @@ class ImageOutpainter {
 		const paths = await Promise.all(
 			data.predictions.map(async (prediction, index) => {
 				const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, "base64");
-				const outputPath = path.join(process.cwd(), "public", "generations", `prediction_${index}.jpg`);
+				const outputPath = path.join(process.cwd(), "generations", `prediction_${index}.jpg`);
 				await fs.writeFile(outputPath, imageBuffer);
 				return `/generations/prediction_${index}.jpg`;
 			})
