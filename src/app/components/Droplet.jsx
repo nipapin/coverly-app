@@ -5,7 +5,6 @@ import { useStageStore } from "../stores/StageStore";
 import { useTemplateStore } from "../stores/TemplateStore";
 
 export default function Droplet({ droplet }) {
-	console.log("Droplet", droplet);
 	const [isVisible, setIsVisible] = useState(false);
 	const [isLoaded, setIsLoaded] = useState(false);
 	const { images, setImages } = useImagesStore();

@@ -1,10 +1,11 @@
 import { useLayoutStore } from "@/app/stores/LayoutStore";
 import { useTransformerStore } from "../stores/TransformerStore";
+import { useDroplets } from "./useDroplets";
 
 export function useStageInteraction() {
 	const { transformer } = useTransformerStore();
 	const { layout, setLayout } = useLayoutStore();
-
+	const { createDroplets } = useDroplets();
 	const handleMouseScroll = (e) => {
 		e.evt.preventDefault();
 		if (!e.evt.ctrlKey) return;
@@ -57,6 +58,7 @@ export function useStageInteraction() {
 			const stage = e.currentTarget;
 			stage.setDraggable(false);
 			setLayout({ ...layout, stage: { ...layout.stage, x: stage.x(), y: stage.y() } });
+			createDroplets();
 		}
 	};
 

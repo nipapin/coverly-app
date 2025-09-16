@@ -3,6 +3,7 @@
 # dependencies
 /node_modules
 /public/uploads
+/uploads
 /public/generations
 /sessions
 /.pnp
