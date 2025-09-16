@@ -23,7 +23,7 @@ export async function POST(req) {
 		// Сохраняем файл
 		await writeFile(filePath, buffer);
 
-		return new Response(JSON.stringify({ url: `http://localhost:3000/uploads/${file.name}` }), { status: 200 });
+		return new Response(JSON.stringify({ url: `/uploads/${file.name}` }), { status: 200 });
 	} catch (err) {
 		console.error(err);
 		return new Response(JSON.stringify({ error: "Upload failed" }), {
