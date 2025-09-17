@@ -14,15 +14,14 @@ export async function POST(req) {
 
 		// Достаём байты файла
 		const buffer = Buffer.from(await file.arrayBuffer());
-
 		// Путь куда сохраняем
-		const uploadDir = path.join(process.cwd(), "uploads");
+		const savePath = process.env.NODE_ENV === "development" ? "public/uploads" : "uploads";
+		const uploadDir = path.join(process.cwd(), savePath);
 		await mkdir(uploadDir, { recursive: true });
 		const filePath = path.join(uploadDir, file.name);
 
 		// Сохраняем файл
 		await writeFile(filePath, buffer);
-
 		return new Response(JSON.stringify({ url: `/uploads/${file.name}` }), { status: 200 });
 	} catch (err) {
 		console.error(err);

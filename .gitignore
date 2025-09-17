@@ -5,6 +5,7 @@
 /public/uploads
 /uploads
 /public/generations
+/generations
 /sessions
 /.pnp
 .pnp.*

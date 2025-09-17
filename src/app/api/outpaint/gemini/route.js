@@ -53,16 +53,16 @@ class ImageOutpainter {
 				{
 					input: await sharp({
 						create: {
-							width: this.imageRect.width,
-							height: this.imageRect.height,
+							width: this.compositeRect.width,
+							height: this.compositeRect.height,
 							channels: 4,
 							background: { r: 0, g: 0, b: 0, alpha: 1 }
 						}
 					})
 						.jpeg()
 						.toBuffer(),
-					top: this.imageRect.y,
-					left: this.imageRect.x
+					top: this.compositeRect.top,
+					left: this.compositeRect.left
 				}
 			])
 			.jpeg()
@@ -70,13 +70,45 @@ class ImageOutpainter {
 		this.maskBuffer = maskBuffer;
 	}
 
+	getCroppedArea() {
+		const { imageRect, resultCanvasSize } = this;
+		const cropLeft = imageRect.x < 0 ? Math.abs(imageRect.x) : 0;
+		const cropTop = imageRect.y < 0 ? Math.abs(imageRect.y) : 0;
+		const cropWidth =
+			imageRect.x + imageRect.width > resultCanvasSize.width
+				? imageRect.width - (imageRect.width - resultCanvasSize.width)
+				: imageRect.width - cropLeft;
+		const cropHeight =
+			imageRect.y + imageRect.height > resultCanvasSize.height
+				? imageRect.height - (imageRect.height - resultCanvasSize.height)
+				: imageRect.height - cropTop;
+		this.croppedArea = {
+			left: cropLeft,
+			top: cropTop,
+			width: cropWidth,
+			height: cropHeight
+		};
+	}
+
+	getCompositeRect() {
+		const { imageRect, croppedArea } = this;
+		this.compositeRect = {
+			top: imageRect.y < 0 ? 0 : imageRect.y,
+			left: imageRect.x < 0 ? 0 : imageRect.x,
+			width: croppedArea.width,
+			height: croppedArea.height
+		};
+	}
+
 	async createCanvas() {
 		const inputImagePath = path.join(process.cwd(), this.inputImagePath);
-		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).toBuffer();
+		this.getCroppedArea();
+		this.getCompositeRect();
+		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).extract(this.croppedArea).toBuffer();
 		const canvasBuffer = await sharp({
 			create: { width: this.resultCanvasSize.width, height: this.resultCanvasSize.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } }
 		})
-			.composite([{ input: imageBuffer, top: this.imageRect.y, left: this.imageRect.x }])
+			.composite([{ input: imageBuffer, ...this.compositeRect }])
 			.jpeg()
 			.toBuffer();
 		this.canvasBuffer = canvasBuffer;
@@ -150,8 +182,11 @@ class ImageOutpainter {
 		const paths = await Promise.all(
 			data.predictions.map(async (prediction, index) => {
 				const imageBuffer = Buffer.from(prediction.bytesBase64Encoded, "base64");
-				const outputPath = path.join(process.cwd(), "generations", `prediction_${index}.jpg`);
-				await fs.writeFile(outputPath, imageBuffer);
+				const savePath = process.env.NODE_ENV === "development" ? "public/generations" : "generations";
+				const uploadDir = path.join(process.cwd(), savePath);
+				await fs.mkdir(uploadDir, { recursive: true });
+				const filePath = path.join(uploadDir, `prediction_${index}.jpg`);
+				await fs.writeFile(filePath, imageBuffer);
 				return `/generations/prediction_${index}.jpg`;
 			})
 		);
