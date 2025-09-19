@@ -1,6 +1,6 @@
 import { useSendRequest } from "@/app/hooks/useSendRequest";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { AutoAwesome } from "@mui/icons-material";
+import { AlignHorizontalCenter, AlignVerticalCenter, AutoAwesome, FitScreen, Height } from "@mui/icons-material";
 import { Alert, Button, Card, CardActions, CircularProgress, Snackbar } from "@mui/material";
 import { useState } from "react";
 import ImageCardContent from "./ImageCardContent";
@@ -37,6 +37,20 @@ export default function ImageCard({ layer }) {
 		<Card component={"form"} onSubmit={handleSubmit}>
 			<ImageCardHeader src={firstVariant.src} name={layer.name} count={layer.variants.length} />
 			<ImageCardContent variants={layer.variants} src={firstVariant.src} name={layer.name} />
+			<CardActions>
+				<Button variant='outlined' fullWidth>
+					<AlignHorizontalCenter />
+				</Button>
+				<Button variant='outlined' fullWidth>
+					<AlignVerticalCenter />
+				</Button>
+				<Button variant='outlined' fullWidth sx={{ "& svg": { transform: "rotate(90deg)" } }}>
+					<Height />
+				</Button>
+				<Button variant='outlined' fullWidth>
+					<Height />
+				</Button>
+			</CardActions>
 			<CardActions>
 				<Button
 					variant='contained'
