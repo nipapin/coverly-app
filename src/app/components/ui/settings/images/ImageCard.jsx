@@ -1,6 +1,7 @@
+import { useImageTransform } from "@/app/hooks/useImageTransform";
 import { useSendRequest } from "@/app/hooks/useSendRequest";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { AlignHorizontalCenter, AlignVerticalCenter, AutoAwesome, FitScreen, Height } from "@mui/icons-material";
+import { AlignHorizontalCenter, AlignVerticalCenter, AutoAwesome, Height } from "@mui/icons-material";
 import { Alert, Button, Card, CardActions, CircularProgress, Snackbar } from "@mui/material";
 import { useState } from "react";
 import ImageCardContent from "./ImageCardContent";
@@ -9,6 +10,7 @@ import ImageCardHeader from "./ImageCardHeader";
 export default function ImageCard({ layer }) {
 	const { setTemplate } = useTemplateStore();
 	const { sendRequest } = useSendRequest();
+	const { alignHorizontalCenter, alignVerticalCenter, fitVertical, fitHorizontal } = useImageTransform({ layer });
 	const [alertOptions, setAlertOptions] = useState({
 		severity: "info",
 		open: false,
@@ -38,16 +40,16 @@ export default function ImageCard({ layer }) {
 			<ImageCardHeader src={firstVariant.src} name={layer.name} count={layer.variants.length} />
 			<ImageCardContent variants={layer.variants} src={firstVariant.src} name={layer.name} />
 			<CardActions>
-				<Button variant='outlined' fullWidth>
+				<Button variant='outlined' fullWidth onClick={alignHorizontalCenter}>
 					<AlignHorizontalCenter />
 				</Button>
-				<Button variant='outlined' fullWidth>
+				<Button variant='outlined' fullWidth onClick={alignVerticalCenter}>
 					<AlignVerticalCenter />
 				</Button>
-				<Button variant='outlined' fullWidth sx={{ "& svg": { transform: "rotate(90deg)" } }}>
+				<Button variant='outlined' fullWidth sx={{ "& svg": { transform: "rotate(90deg)" } }} onClick={fitVertical}>
 					<Height />
 				</Button>
-				<Button variant='outlined' fullWidth>
+				<Button variant='outlined' fullWidth onClick={fitHorizontal}>
 					<Height />
 				</Button>
 			</CardActions>

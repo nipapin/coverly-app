@@ -1,15 +1,24 @@
-export const useImageTransform = () => {
+import { useStageStore } from "../stores/StageStore";
+
+export const useImageTransform = ({ layer }) => {
+	const { stage } = useStageStore();
 	const alignHorizontalCenter = () => {
-		const image = document.querySelector(".image");
-		image.style.transform = "translateX(-50%)";
+		console.log(layer);
+		const canvasLayer = stage.findOne((node) => node.name() === layer.name);
+		const layerSource = canvasLayer.children[0];
+		console.log(canvasLayer.getAbsolutePosition(canvasLayer));
+		console.log(layerSource.getAbsolutePosition(canvasLayer));
 	};
 
 	const alignVerticalCenter = () => {
-		const image = document.querySelector(".image");
-		image.style.transform = "translateY(-50%)";
+		console.log(layer);
 	};
-	const fitVertical = () => {};
-	const fitHorizontal = () => {};
+	const fitVertical = () => {
+		console.log(layer);
+	};
+	const fitHorizontal = () => {
+		console.log(layer);
+	};
 	return {
 		alignHorizontalCenter,
 		alignVerticalCenter,
