@@ -7,10 +7,22 @@ import useImage from "use-image";
 import NoImageView from "./NoImageView";
 
 export default function ImageView({ item }) {
+	return item.variants.length > 0 ? (
+		<>
+			{item.variants.map((variant) => (
+				<ImageSource key={variant.src} variant={variant} visible={variant.src === item.src} layerName={item.name} />
+			))}
+		</>
+	) : (
+		<NoImageView item={item} />
+	);
+}
+
+const ImageSource = ({ variant, visible, layerName }) => {
 	const { template } = useTemplateStore();
 	const { transformer } = useTransformerStore();
 	const { handleTransformEnd } = useTransform();
-	const [imageSource] = useImage(item.src || "", "anonymous");
+	const [imageSource] = useImage(variant.src || "", "anonymous");
 	const imageRef = useRef(null);
 
 	const handleClick = (e) => {
@@ -27,42 +39,25 @@ export default function ImageView({ item }) {
 	};
 
 	useEffect(() => {
-		if (!imageRef.current) return;
-		const parent = imageRef.current.getParent();
-		const parentWidth = parent.width();
-		const parentHeight = parent.height();
-		const parentAR = parentWidth / parentHeight;
-		let imageWidth = imageSource.width;
-		let imageHeight = imageSource.height;
-		const imageAR = imageWidth / imageHeight;
-
-		if (parentAR > imageAR) {
-			imageWidth = parentWidth;
-			imageHeight = imageWidth / imageAR;
-		} else {
-			imageHeight = parentHeight;
-			imageWidth = imageHeight * imageAR;
+		const templateLayer = template.layers
+			.find((_layer) => _layer.name === layerName)
+			.children[0].variants.find((_variant) => _variant.src === variant.src);
+		if (templateLayer.clientRect) return;
+		if (imageRef.current && imageSource) {
+			const img = imageRef.current;
+			const parent = img.getParent();
+			if (parent) {
+				const parentWidth = parent.width ? parent.width() : parent.getAttrs().width;
+				const parentHeight = parent.height ? parent.height() : parent.getAttrs().height;
+				const imgWidth = imageSource.width;
+				const imgHeight = imageSource.height;
+				const x = (parentWidth - imgWidth) / 2;
+				const y = (parentHeight - imgHeight) / 2;
+				img.setAttrs({ x, y });
+				img.getStage().batchDraw();
+			}
 		}
-		imageRef.current.setAttrs({ src: imageSource.src });
-		imageRef.current.width(imageWidth);
-		imageRef.current.height(imageHeight);
-		imageRef.current.offsetX((imageWidth - parentWidth) / 2);
-		imageRef.current.offsetY((imageHeight - parentHeight) / 2);
+	}, [visible, imageSource]);
 
-		const itemLayer = template.layers.find((layer) => layer.name === item.name);
-		const layerSource = itemLayer.children.find((child) => child.src === item.src);
-		const layerVariant = layerSource?.variants?.find((variant) => variant.src === item.src);
-		if (layerVariant) {
-			imageRef.current.setAttrs(layerVariant.transform);
-		}
-		imageRef.current.getLayer().batchDraw();
-	}, [imageSource, item.src]);
-
-	return imageSource && item.src ? (
-		<>
-			<Image ref={imageRef} onClick={handleClick} image={imageSource} onDragEnd={handleTransformEnd} />
-		</>
-	) : (
-		<NoImageView item={item} />
-	);
-}
+	return <Image ref={imageRef} image={imageSource} onClick={handleClick} onDragEnd={handleTransformEnd} visible={visible} />;
+};

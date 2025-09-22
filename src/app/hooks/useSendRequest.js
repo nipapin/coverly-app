@@ -101,12 +101,14 @@ export const useSendRequest = () => {
 								child.type === "image"
 									? {
 											...child,
+											src: generated.src,
 											variants: [...child.variants, { src: generated.src, transform: child.variants[0].transform }]
 									  }
 									: child
 							)
 						};
 					}
+
 					return templateLayer;
 				})
 			}
@@ -114,13 +116,13 @@ export const useSendRequest = () => {
 	};
 
 	const sendRequest = async ({ src, name, prompt }) => {
+		console.log(src, name, prompt);
 		const group = getLayer(name);
-		const source = group.children[0];
+		const source = group.children.find((child) => child.visible());
 
 		const groupTransform = getGroupTransform(group);
 		const sourceTransform = getSourceTransform(source);
 		const outpaintRequired = isHasGaps(groupTransform, sourceTransform);
-
 		if (outpaintRequired) {
 			return await outpaintRequest({ src, name, prompt, groupTransform, sourceTransform });
 		} else {

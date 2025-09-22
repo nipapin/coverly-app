@@ -40,6 +40,7 @@ export default function Settings() {
 				zIndex: 1000,
 				padding: "1rem",
 				minWidth: "400px",
+				width: "400px",
 				height: "100vh",
 				display: "flex",
 				flexDirection: "column"

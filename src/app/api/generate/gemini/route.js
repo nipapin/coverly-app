@@ -15,7 +15,7 @@ const genai = new GoogleGenAI({
 
 export async function POST(req) {
 	const { src, prompt } = await req.json();
-	const imagePath = path.join(process.cwd(), src);
+	const imagePath = process.env.NODE_ENV === "development" ? path.join(process.cwd(), "public", src) : path.join(process.cwd(), src);
 	const base64Image = fs.readFileSync(imagePath, "base64");
 	const mimeType = mime.lookup(imagePath);
 	const contents = [
@@ -73,15 +73,23 @@ export async function POST(req) {
 		console.log("There is no content");
 		return NextResponse.json({ error: "There is no content" }, { status: 500 });
 	}
-
+	fs.writeFileSync(path.join(process.cwd(), "content.json"), JSON.stringify(content, null, 2));
 	for (const part of content.parts) {
 		if (part.inlineData) {
 			const fileName = crypto.randomUUID() + ".png";
-			fs.mkdirSync(path.join(process.cwd(), "generations"), { recursive: true });
-			const filePath = path.join(process.cwd(), "generations", fileName);
-			const buffer = Buffer.from(part.inlineData.data, "base64");
-			fs.writeFileSync(filePath, buffer);
-			return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
+			if (process.env.NODE_ENV === "development") {
+				fs.mkdirSync(path.join(process.cwd(), "public", "generations"), { recursive: true });
+				const filePath = path.join(process.cwd(), "public", "generations", fileName);
+				const buffer = Buffer.from(part.inlineData.data, "base64");
+				fs.writeFileSync(filePath, buffer);
+				return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
+			} else {
+				fs.mkdirSync(path.join(process.cwd(), "generations"), { recursive: true });
+				const filePath = path.join(process.cwd(), "generations", fileName);
+				const buffer = Buffer.from(part.inlineData.data, "base64");
+				fs.writeFileSync(filePath, buffer);
+				return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
+			}
 		} else {
 			console.log("part", part);
 		}

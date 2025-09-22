@@ -1,3 +1,4 @@
+import { useStageStore } from "../stores/StageStore";
 import { useTemplateStore } from "../stores/TemplateStore";
 
 const saveTransform = (node) => {
@@ -12,6 +13,7 @@ const saveTransform = (node) => {
 
 export const useTransform = () => {
 	const { template, setTemplate } = useTemplateStore();
+	const { stage } = useStageStore();
 
 	const handleTransformEnd = (e) => {
 		const target = e.target;
@@ -21,11 +23,16 @@ export const useTransform = () => {
 			...template,
 			layers: template.layers.map((layer) => {
 				if (layer.name === name) {
+					const layerGroup = stage.findOne((node) => node.name() === layer.name);
+					const layerSource = layerGroup.children[0];
+					const absolutePosition = layerSource.getAbsolutePosition(layerGroup);
 					return {
 						...layer,
 						children: layer.children.map((child) => ({
 							...child,
-							variants: child.variants.map((variant) => (variant.src === child.src ? { ...variant, transform: saveTransform(target) } : variant))
+							variants: child.variants.map((variant) =>
+								variant.src === child.src ? { ...variant, transform: saveTransform(target), clientRect: { ...absolutePosition } } : variant
+							)
 						}))
 					};
 				}

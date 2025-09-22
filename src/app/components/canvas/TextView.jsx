@@ -26,12 +26,14 @@ export default function TextView({ item, parent }) {
 			<Rect ref={rectRef} fill={"#ffee02"} />
 			<Text
 				ref={textRef}
-				text={(texts[item.name] || "Sample Text").toUpperCase()}
+				text={(texts[item.name]?.text || "Sample Text").toUpperCase()}
 				align={"center"}
 				verticalAlign={"middle"}
 				fontFamily={font}
 				fontSize={fontSize}
 				fill={"#000000"}
+				offsetX={-texts[item.name]?.offsetX || 0}
+				offsetY={-texts[item.name]?.offsetY || 0}
 			/>
 		</>
 	);

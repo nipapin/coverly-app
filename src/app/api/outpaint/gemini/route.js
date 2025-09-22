@@ -185,9 +185,10 @@ class ImageOutpainter {
 				const savePath = process.env.NODE_ENV === "development" ? "public/generations" : "generations";
 				const uploadDir = path.join(process.cwd(), savePath);
 				await fs.mkdir(uploadDir, { recursive: true });
-				const filePath = path.join(uploadDir, `prediction_${index}.jpg`);
+				const fileName = crypto.randomUUID() + ".jpg";
+				const filePath = path.join(uploadDir, fileName);
 				await fs.writeFile(filePath, imageBuffer);
-				return `/generations/prediction_${index}.jpg`;
+				return `/generations/${fileName}`;
 			})
 		);
 		return paths;
@@ -196,7 +197,10 @@ class ImageOutpainter {
 
 export async function POST(req) {
 	const { src, transform } = await req.json();
-	const outpainter = new ImageOutpainter({ inputImagePath: src, transform });
+	const outpainter = new ImageOutpainter({
+		inputImagePath: process.env.NODE_ENV === "development" ? `/public/${src}` : src,
+		transform
+	});
 	const paths = await outpainter.process();
 	return NextResponse.json({ data: paths }, { status: 200 });
 }
