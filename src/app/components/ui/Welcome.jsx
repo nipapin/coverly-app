@@ -6,7 +6,7 @@ import { Box, Container, Divider, List, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import ProjectCard from "./ProjectCard";
 
-export default function Welcome() {
+export default function Welcome({ version }) {
 	const [projects, setProjects] = useState([]);
 	const [pending, setPending] = useState(true);
 	useEffect(() => {
@@ -26,8 +26,25 @@ export default function Welcome() {
 			}}
 		>
 			<Container maxWidth='lg' sx={{ padding: "2rem 0" }}>
-				<Typography variant='h1' fontSize={"2rem"} fontWeight={600}>
-					Coverly
+				<Typography variant='h1' fontSize={"2rem"} fontWeight={600} position='relative' display='inline-block'>
+					Coverly{" "}
+					<Typography
+						component='span'
+						sx={{
+							position: "absolute",
+							top: 0,
+							left: "100%",
+							padding: "0.125rem 0.25rem",
+							ml: "10px",
+							fontSize: "10px",
+							fontWeight: 600,
+							backgroundColor: "white",
+							color: "black",
+							borderRadius: "25rem"
+						}}
+					>
+						{version}
+					</Typography>
 				</Typography>
 				<Divider sx={{ margin: "2rem 0" }} />
 				<Typography variant='h2' fontSize={"1.5rem"} fontWeight={400} my={"1rem"}>
