@@ -60,7 +60,10 @@ export async function POST(req) {
 
 	const generateContentResponse = await genai.models.generateContent({
 		model: "gemini-2.5-flash-image-preview",
-		contents: promptContents
+		contents: promptContents,
+		safetySettings: {
+			threshold: "BLOCK_NONE"
+		}
 	});
 
 	console.log(generateContentResponse);
