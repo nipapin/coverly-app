@@ -38,7 +38,7 @@ export default function ImageCardContent({ variants, src, name }) {
 
 	console.log(variants);
 	return (
-		<CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.5rem", pt: 0, pb: '0.25rem' }}>
+		<CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.25rem", pt: 0, pb: '0.25rem' }}>
 			<TextField fullWidth label='Prompt' placeholder='Enter prompt (optional)' rows={2} multiline name='prompt' />
 			{variants.length > 0 ? (
 				<Box>

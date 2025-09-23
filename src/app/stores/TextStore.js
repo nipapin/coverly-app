@@ -1,6 +1,8 @@
 import { create } from "zustand";
 
 export const useTextStore = create((set) => ({
-	texts: {},
+	texts: {
+		offsetY: 0
+	},
 	setTexts: (texts) => set({ texts })
 }));

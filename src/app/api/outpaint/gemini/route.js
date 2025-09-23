@@ -78,10 +78,7 @@ class ImageOutpainter {
 			imageRect.x + imageRect.width > resultCanvasSize.width
 				? imageRect.width - (imageRect.width - resultCanvasSize.width)
 				: imageRect.width - cropLeft;
-		const cropHeight =
-			imageRect.y + imageRect.height > resultCanvasSize.height
-				? imageRect.height - (imageRect.height - resultCanvasSize.height)
-				: imageRect.height - cropTop;
+		const cropHeight = imageRect.y + imageRect.height > resultCanvasSize.height ? resultCanvasSize.height - imageRect.y : imageRect.height - cropTop;
 		this.croppedArea = {
 			left: cropLeft,
 			top: cropTop,
@@ -104,6 +101,7 @@ class ImageOutpainter {
 		const inputImagePath = path.join(process.cwd(), this.inputImagePath);
 		this.getCroppedArea();
 		this.getCompositeRect();
+		console.log(this.imageRect, this.croppedArea);
 		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).extract(this.croppedArea).toBuffer();
 		const canvasBuffer = await sharp({
 			create: { width: this.resultCanvasSize.width, height: this.resultCanvasSize.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } }
@@ -111,6 +109,7 @@ class ImageOutpainter {
 			.composite([{ input: imageBuffer, ...this.compositeRect }])
 			.jpeg()
 			.toBuffer();
+		fs.writeFile(path.join(process.cwd(), "preview.jpg"), canvasBuffer);
 		this.canvasBuffer = canvasBuffer;
 	}
 

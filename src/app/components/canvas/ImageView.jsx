@@ -42,7 +42,10 @@ const ImageSource = ({ variant, visible, layerName }) => {
 		const templateLayer = template.layers
 			.find((_layer) => _layer.name === layerName)
 			.children[0].variants.find((_variant) => _variant.src === variant.src);
-		if (templateLayer.clientRect) return;
+		if (templateLayer.clientRect) {
+			console.log("Image is transformed");
+			return;
+		}
 		if (imageRef.current && imageSource) {
 			const img = imageRef.current;
 			const parent = img.getParent();
@@ -51,9 +54,12 @@ const ImageSource = ({ variant, visible, layerName }) => {
 				const parentHeight = parent.height ? parent.height() : parent.getAttrs().height;
 				const imgWidth = imageSource.width;
 				const imgHeight = imageSource.height;
-				const x = (parentWidth - imgWidth) / 2;
-				const y = (parentHeight - imgHeight) / 2;
-				img.setAttrs({ x, y });
+				const width = parentWidth;
+				const height = imgHeight * (parentWidth / imgWidth);
+				const x = 0;
+				const y = (parentHeight - height) / 2;
+				console.log(width, height);
+				img.setAttrs({ x, y, width, height });
 				img.getStage().batchDraw();
 			}
 		}

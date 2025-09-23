@@ -3,6 +3,7 @@ import fs from "fs";
 import mime from "mime-types";
 import { NextResponse } from "next/server";
 import path from "path";
+import sharp from "sharp";
 
 const prompts = {
 	analyst: `Describe how to improve visual of the image to make it viral and attractive. Limit your response to 200 symbols.`
@@ -50,6 +51,7 @@ export async function POST(req) {
 		{
 			text: `Please generate new image similar to the original one but without any text or logos. Save faces as they are. Apply this user prompt to the task: ${response}.`
 		},
+		{ text: "Does not provide any text description. Only image." },
 		{
 			inlineData: {
 				mimeType: mimeType,
@@ -81,19 +83,12 @@ export async function POST(req) {
 	for (const part of content.parts) {
 		if (part.inlineData) {
 			const fileName = crypto.randomUUID() + ".png";
-			if (process.env.NODE_ENV === "development") {
-				fs.mkdirSync(path.join(process.cwd(), "public", "generations"), { recursive: true });
-				const filePath = path.join(process.cwd(), "public", "generations", fileName);
-				const buffer = Buffer.from(part.inlineData.data, "base64");
-				fs.writeFileSync(filePath, buffer);
-				return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
-			} else {
-				fs.mkdirSync(path.join(process.cwd(), "generations"), { recursive: true });
-				const filePath = path.join(process.cwd(), "generations", fileName);
-				const buffer = Buffer.from(part.inlineData.data, "base64");
-				fs.writeFileSync(filePath, buffer);
-				return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
-			}
+			const dirPath = process.env.NODE_ENV === "development" ? ["public", "generations"] : ["generations"];
+			fs.mkdirSync(path.join(process.cwd(), ...dirPath), { recursive: true });
+			const filePath = path.join(process.cwd(), ...dirPath, fileName);
+			const buffer = Buffer.from(part.inlineData.data, "base64");
+			fs.writeFileSync(filePath, await resizeToOriginalSize(buffer, base64Image));
+			return NextResponse.json({ src: `/generations/${fileName}` }, { status: 200 });
 		} else {
 			console.log("part", part);
 		}
@@ -101,4 +96,11 @@ export async function POST(req) {
 
 	console.log("Failed to get base64", JSON.stringify(content.parts));
 	return NextResponse.json({ error: "Failed to get base64" }, { status: 500 });
+}
+
+async function resizeToOriginalSize(buffer, base64Image) {
+	const originalImage = sharp(Buffer.from(base64Image, "base64"));
+	const originalSize = await originalImage.metadata();
+	const resizedImage = sharp(buffer).resize(originalSize.width, originalSize.height);
+	return resizedImage.toBuffer();
 }

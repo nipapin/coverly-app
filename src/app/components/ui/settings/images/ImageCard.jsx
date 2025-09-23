@@ -64,7 +64,7 @@ export default function ImageCard({ layer }) {
 						<Height />
 					</Button>
 				</CardActions>
-				<CardActions>
+				<CardActions sx={{ pt: 0 }}>
 					<Button
 						variant='contained'
 						startIcon={alertOptions.pending ? <CircularProgress size={16} /> : <AutoAwesome />}
@@ -75,10 +75,10 @@ export default function ImageCard({ layer }) {
 						Generate
 					</Button>
 				</CardActions>
-				<Snackbar open={alertOptions.open} onClose={() => setAlertOptions({ ...alertOptions, open: false })} autoHideDuration={3000}>
-					<Alert severity={alertOptions.severity}>{alertOptions.message}</Alert>
-				</Snackbar>
 			</Collapse>
+			<Snackbar open={alertOptions.open} onClose={() => setAlertOptions({ ...alertOptions, open: false })} autoHideDuration={3000}>
+				<Alert severity={alertOptions.severity}>{alertOptions.message}</Alert>
+			</Snackbar>
 		</Card>
 	);
 }

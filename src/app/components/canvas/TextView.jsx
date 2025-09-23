@@ -32,8 +32,7 @@ export default function TextView({ item, parent }) {
 				fontFamily={font}
 				fontSize={fontSize}
 				fill={"#000000"}
-				offsetX={-texts[item.name]?.offsetX || 0}
-				offsetY={-texts[item.name]?.offsetY || 0}
+				offsetY={-texts.offsetY || 0}
 			/>
 		</>
 	);
