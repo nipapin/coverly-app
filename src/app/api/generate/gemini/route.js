@@ -68,10 +68,11 @@ export async function POST(req) {
 		}
 	});
 
-	if (generateContentResponse?.candidates?.length === 0) {
+	if (!generateContentResponse.candidates || generateContentResponse.candidates.length === 0) {
 		console.log("Failed to use gemini-2.5-flash-image-preview");
 		return NextResponse.json({ error: "Failed to use gemini-2.5-flash-image-preview" }, { status: 500 });
 	}
+	console.log("generateContentResponse", JSON.stringify(generateContentResponse));
 	const candidate = generateContentResponse.candidates[0];
 	const { content } = candidate;
 
