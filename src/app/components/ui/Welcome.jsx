@@ -37,7 +37,7 @@ export default function Welcome({ version }) {
 							padding: "0.125rem 0.25rem",
 							ml: "10px",
 							fontSize: "10px",
-							fontWeight: 600,
+							fontWeight: 600, 
 							backgroundColor: "white",
 							color: "black",
 							borderRadius: "25rem"

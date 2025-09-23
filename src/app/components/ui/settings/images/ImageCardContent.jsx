@@ -38,7 +38,7 @@ export default function ImageCardContent({ variants, src, name }) {
 
 	console.log(variants);
 	return (
-		<CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.25rem", pt: 0, pb: '0.25rem' }}>
+		<CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.25rem", pt: 0, pb: "0.25rem" }}>
 			<TextField fullWidth label='Prompt' placeholder='Enter prompt (optional)' rows={2} multiline name='prompt' />
 			{variants.length > 0 ? (
 				<Box>
@@ -55,7 +55,8 @@ export default function ImageCardContent({ variants, src, name }) {
 								height: "0.5rem"
 							},
 							"&::-webkit-scrollbar-thumb": {
-								backgroundColor: "rgba(0, 0, 0, 0.2)",
+								backgroundColor: "rgba(255, 255, 255, 0.8)",
+								border: "2px solid #17304e",
 								borderRadius: "0.25rem"
 							},
 							"&::-webkit-scrollbar-track": {

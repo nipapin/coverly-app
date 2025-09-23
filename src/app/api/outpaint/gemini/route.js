@@ -101,7 +101,6 @@ class ImageOutpainter {
 		const inputImagePath = path.join(process.cwd(), this.inputImagePath);
 		this.getCroppedArea();
 		this.getCompositeRect();
-		console.log(this.imageRect, this.croppedArea);
 		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).extract(this.croppedArea).toBuffer();
 		const canvasBuffer = await sharp({
 			create: { width: this.resultCanvasSize.width, height: this.resultCanvasSize.height, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 1 } }

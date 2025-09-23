@@ -52,11 +52,11 @@ export const useSendRequest = () => {
 	const outpaintRequest = async ({ src, name, prompt, groupTransform, sourceTransform }) => {
 		const generated = await generate(src, prompt);
 		if (!generated) {
-			return { severity: "error", message: "Error generating image" };
+			return { severity: "error", message: "Error generating image. Please try again." };
 		}
 		const outpainted = await outpaint(generated.src, { groupTransform, sourceTransform });
 		if (!outpainted) {
-			return { severity: "error", message: "Error outpainting image" };
+			return { severity: "error", message: "Error outpainting image. Please try again." };
 		}
 		return {
 			severity: "success",
