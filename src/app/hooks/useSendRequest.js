@@ -58,7 +58,7 @@ export const useSendRequest = () => {
 		if (!outpainted) {
 			return {
 				severity: "warning",
-				message: "Your image has been generated succsefully, but outpainting failed",
+				message: "Your image has been generated succsefully, but outpainting failed. Please try again with generated image.",
 				template: {
 					...template,
 					layers: template.layers.map((templateLayer) => {
