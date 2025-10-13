@@ -56,7 +56,31 @@ export const useSendRequest = () => {
 		}
 		const outpainted = await outpaint(generated.src, { groupTransform, sourceTransform });
 		if (!outpainted) {
-			return { severity: "error", message: "Error outpainting image. Please try again." };
+			return {
+				severity: "warning",
+				message: "Your image has been generated succsefully, but outpainting failed",
+				template: {
+					...template,
+					layers: template.layers.map((templateLayer) => {
+						if (templateLayer.name === name) {
+							return {
+								...templateLayer,
+								children: templateLayer.children.map((child) =>
+									child.type === "image"
+										? {
+												...child,
+												src: generated.src,
+												variants: [...child.variants, { src: generated.src, transform: child.variants[0].transform }]
+										  }
+										: child
+								)
+							};
+						}
+
+						return templateLayer;
+					})
+				}
+			};
 		}
 		return {
 			severity: "success",
