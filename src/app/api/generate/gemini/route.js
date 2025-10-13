@@ -53,7 +53,10 @@ const enhanceUserPrompt = async (prompt, image) => {
 };
 
 const generateImage = async (userPrompt, systemPrompt, image) => {
-	const contents = [{ text: `please remove all text from the image, ${userPrompt}` }, { inlineData: { mimeType: image.mimeType, data: image.base64Image } }];
+	const contents = [
+		{ text: `please remove all text from the image, ${userPrompt}` },
+		{ inlineData: { mimeType: image.mimeType, data: image.base64Image } }
+	];
 	const response = await genai.models.generateContent({
 		model: "gemini-2.5-flash-image",
 		contents: contents,
@@ -65,6 +68,9 @@ const generateImage = async (userPrompt, systemPrompt, image) => {
 	const candidate = response.candidates[0];
 	const { content } = candidate;
 	if (!content) {
+		return;
+	}
+	if (!content.parts) {
 		return;
 	}
 	for (const part of content.parts) {
@@ -104,7 +110,6 @@ export async function POST(req) {
 	const imagePath = process.env.NODE_ENV === "development" ? path.join(process.cwd(), "public", src) : path.join(process.cwd(), src);
 	const base64Image = fs.readFileSync(imagePath, "base64");
 	const mimeType = mime.lookup(imagePath);
-
 	const analystPrompt = await retrySystem(() => describeInputImage({ base64Image, mimeType }));
 	const enhancedPrompt = prompt.trim() === "" ? "" : await retrySystem(() => enhanceUserPrompt(prompt, { base64Image, mimeType }));
 	const generatedImage = await retrySystem(() => generateImage(enhancedPrompt, analystPrompt, { base64Image, mimeType }));
