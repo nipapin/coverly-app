@@ -200,5 +200,8 @@ export async function POST(req) {
 		transform
 	});
 	const paths = await outpainter.process();
+	if (!paths) {
+		return NextResponse.json({ data: [] }, { status: 500 });
+	}
 	return NextResponse.json({ data: paths }, { status: 200 });
 }

@@ -116,7 +116,6 @@ export const useSendRequest = () => {
 	};
 
 	const sendRequest = async ({ src, name, prompt }) => {
-		console.log(src, name, prompt);
 		const group = getLayer(name);
 		const source = group.children.find((child) => child.visible());
 
