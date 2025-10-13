@@ -76,7 +76,7 @@ export default function ImageCard({ layer }) {
 					</Button>
 				</CardActions>
 			</Collapse>
-			<Snackbar open={alertOptions.open} onClose={() => setAlertOptions({ ...alertOptions, open: false })} autoHideDuration={3000}>
+			<Snackbar open={alertOptions.open} onClose={() => setAlertOptions({ ...alertOptions, open: false })} autoHideDuration={30000}>
 				<Alert severity={alertOptions.severity}>{alertOptions.message}</Alert>
 			</Snackbar>
 		</Card>
