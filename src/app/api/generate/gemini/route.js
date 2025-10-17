@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import path from "path";
 import sharp from "sharp";
 import crypto from "crypto";
+import Logger from "@/utilities/Logger";
 
 const prompts = {
 	enhancer: fs.readFileSync(path.join(process.cwd(), "src/app/api/generate/gemini/enhancedPrompt.txt"), "utf8"),
@@ -54,8 +55,9 @@ const enhanceUserPrompt = async (prompt, image) => {
 
 const generateImage = async (userPrompt, systemPrompt, image) => {
 	const contents = [
-		{ text: `please remove all text from the image, ${userPrompt}` },
-		{ inlineData: { mimeType: image.mimeType, data: image.base64Image } }
+		{ inlineData: { mimeType: image.mimeType, data: image.base64Image } },
+		{ text: `${userPrompt}` },
+		{ text: `please remove all text from the image` }
 	];
 	const response = await genai.models.generateContent({
 		model: "gemini-2.5-flash-image",
@@ -65,14 +67,18 @@ const generateImage = async (userPrompt, systemPrompt, image) => {
 			systemInstruction: systemPrompt
 		}
 	});
+	Logger.info("generateImage response", { response });
 	const candidate = response.candidates[0];
 	const { content } = candidate;
 	if (!content) {
+		Logger.error("generateImage response content is empty");
 		return;
 	}
 	if (!content.parts) {
+		Logger.error("generateImage response content parts is empty");
 		return;
 	}
+	Logger.info("generateImage response content parts", { parts: content.parts });
 	for (const part of content.parts) {
 		if (part.inlineData) {
 			const fileName = crypto.randomUUID() + ".png";
@@ -81,9 +87,11 @@ const generateImage = async (userPrompt, systemPrompt, image) => {
 			const filePath = path.join(process.cwd(), ...dirPath, fileName);
 			const buffer = Buffer.from(part.inlineData.data, "base64");
 			fs.writeFileSync(filePath, await resizeToOriginalSize(buffer, image.base64Image));
+			Logger.info("generateImage response part inlineData", { fileName });
 			return fileName;
 		}
 	}
+	Logger.error("generateImage response part inlineData is empty");
 	return;
 };
 
@@ -113,5 +121,6 @@ export async function POST(req) {
 	const analystPrompt = await retrySystem(() => describeInputImage({ base64Image, mimeType }));
 	const enhancedPrompt = prompt.trim() === "" ? "" : await retrySystem(() => enhanceUserPrompt(prompt, { base64Image, mimeType }));
 	const generatedImage = await retrySystem(() => generateImage(enhancedPrompt, analystPrompt, { base64Image, mimeType }));
+	Logger.info("generateImage", { prompt, imagePath, analystPrompt, enhancedPrompt, generatedImage });
 	return NextResponse.json({ src: `/generations/${generatedImage}` }, { status: 200 });
 }
