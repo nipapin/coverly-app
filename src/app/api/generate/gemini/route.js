@@ -64,7 +64,20 @@ const generateImage = async (userPrompt, systemPrompt, image) => {
 		contents: contents,
 		config: {
 			responseModalities: ["IMAGE"],
-			systemInstruction: systemPrompt
+			systemInstruction: `
+Objective: Transform the current dull and warm-toned image into a bright, clean, and hyper-vibrant commercial aesthetic. Eliminate the yellow/green color cast on the skin and background, dramatically boost color saturation, and increase overall luminosity to achieve a playful, high-energy, and visually striking look.
+Key Adjustments:
+Lighting and Exposure:
+Exposure Boost: Significantly increase overall exposure to brighten the entire image, aiming for a high-key look.
+Shadow & Black Point Lift: Aggressively lift shadows and black points to remove all dark, muddy areas, especially on the skin and in any existing crevices. Ensure there are no true blacks, making the image feel airy and light.
+Highlight & White Point Expansion: Push highlights and white points to pure white, ensuring the background (currently dull blue) becomes a vibrant, clean blue and any light elements on the subject (e.g., nails, whites of eyes) are crisp.
+Color Correction (Crucial for this image):
+White Balance Adjustment: Correct the severe yellow/green color cast. Shift the temperature towards cooler tones (more blue) and adjust the tint significantly towards magenta to neutralize the green. The skin should appear natural and healthy, not sallow.
+Saturation & Vibrance Boost: Dramatically increase both saturation and vibrance across all colors. Make the rainbow rings pop with intense, distinct colors. The blue background should become a vivid, electric blue, matching the high-energy aesthetic.
+Hue Purity: Ensure the blue of the background is a pure, clean blue. Verify that the colors in the rings are distinct and not bleeding into each other.
+Clarity and Sharpness:
+Clarity Boost: Add a moderate amount of clarity to enhance mid-tone contrast, making the details of the rings, skin, and face more defined without looking overly artificial.
+Sharpening: Apply a noticeable level of sharpening to ensure crisp edges and emphasize fine details, particularly on the jewelry and facial features.`
 		}
 	});
 	Logger.info("generateImage response", { response });
@@ -118,7 +131,8 @@ export async function POST(req) {
 	const imagePath = process.env.NODE_ENV === "development" ? path.join(process.cwd(), "public", src) : path.join(process.cwd(), src);
 	const base64Image = fs.readFileSync(imagePath, "base64");
 	const mimeType = mime.lookup(imagePath);
-	const analystPrompt = await retrySystem(() => describeInputImage({ base64Image, mimeType }));
+	// const analystPrompt = await retrySystem(() => describeInputImage({ base64Image, mimeType }));
+	const analystPrompt = "";
 	const enhancedPrompt = prompt.trim() === "" ? "" : await retrySystem(() => enhanceUserPrompt(prompt, { base64Image, mimeType }));
 	const generatedImage = await retrySystem(() => generateImage(enhancedPrompt, analystPrompt, { base64Image, mimeType }));
 	Logger.info("generateImage", { prompt, imagePath, analystPrompt, enhancedPrompt, generatedImage });
