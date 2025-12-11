@@ -1,17 +1,24 @@
 import { useTemplateExport } from "@/app/hooks/useTemplateExport";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { Download } from "@mui/icons-material";
+import { Download, Save } from "@mui/icons-material";
 import { Box, Button, Divider, Paper, Typography } from "@mui/material";
 import { useState } from "react";
+import AssetsTab from "./assets/AssetsTab";
 import ImagesTab from "./images/ImagesTab";
 import TextsTab from "./texts/TextsTab";
+
+const TabMap = {
+  images: { id: "images", name: "Images", component: <ImagesTab /> },
+  texts: { id: "texts", name: "Texts", component: <TextsTab /> },
+  assets: { id: "assets", name: "Assets", component: <AssetsTab /> },
+};
 
 export default function Settings() {
   const { template } = useTemplateStore();
   const { exportTemplateView } = useTemplateExport();
   const [activeTab, setActiveTab] = useState("images");
-  const images = template.layers.filter((layer) => layer.children?.some((child) => child.type === "image"));
-  const texts = template.layers.filter((layer) => layer.children?.some((child) => child.type === "text"));
+  const [isSaving, setIsSaving] = useState(false);
+  const tabs = template?.overlay || [];
 
   const handleExport = async () => {
     try {
@@ -22,6 +29,22 @@ export default function Settings() {
       await exportTemplateView(filename);
     } catch (error) {
       console.error("Export failed:", error);
+    }
+  };
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const pathname = window.location.pathname;
+      const sessionId = pathname.split("/").pop();
+      fetch(`/api/workflow/save`, {
+        method: "POST",
+        body: JSON.stringify({ sessionId, template }),
+      }).then((res) => {
+        console.log(res);
+        setIsSaving(false);
+      });
+    } catch (error) {
+      console.error("Save failed:", error);
     }
   };
 
@@ -45,27 +68,21 @@ export default function Settings() {
       <Typography>Settings</Typography>
       <Divider sx={{ my: "1rem" }} />
       <Box display={"flex"} gap={"0.5rem"}>
-        <Button
-          disabled={images.length === 0}
-          fullWidth
-          onClick={() => setActiveTab("images")}
-          variant={activeTab === "images" ? "contained" : "text"}
-        >
-          Images
-        </Button>
-        <Button
-          disabled={texts.length === 0}
-          fullWidth
-          onClick={() => setActiveTab("texts")}
-          variant={activeTab === "texts" ? "contained" : "text"}
-        >
-          Texts
-        </Button>
+        {tabs.map((tab) => {
+          const { id, name, component } = TabMap[tab];
+          return (
+            <Button key={id} fullWidth onClick={() => setActiveTab(id)} variant={activeTab === id ? "contained" : "text"}>
+              {name}
+            </Button>
+          );
+        })}
       </Box>
       <Divider sx={{ my: "1rem" }} />
-      <ImagesTab visible={activeTab === "images"} />
-      <TextsTab visible={activeTab === "texts"} />
-      <Box sx={{ mt: "auto", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+      {TabMap[activeTab]?.component || <></>}
+      <Box sx={{ mt: "auto", display: "flex", flexDirection: "row", gap: "0.5rem" }}>
+        <Button variant="contained" startIcon={<Save />} fullWidth onClick={handleSave} disabled={isSaving}>
+          Save
+        </Button>
         <Button variant="contained" startIcon={<Download />} fullWidth onClick={handleExport}>
           Export
         </Button>

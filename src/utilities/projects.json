@@ -1,323 +1,611 @@
 {
-    "projects": [
+  "projects": [
+    {
+      "id": "5mc",
+      "name": "5 Minutes Crafts",
+      "templates": [
         {
-            "id": "5mc",
-            "name": "5 Minutes Crafts",
-            "templates": [
+          "id": "2-images-2-text",
+          "name": "2 images, 2 text",
+          "preview": "/images/projects/5mc/2-images-2-text.jpg",
+          "overlay": ["images", "texts"],
+          "layers": [
+            {
+              "name": "left-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
                 {
-                    "id": "2-images-2-text",
-                    "name": "2 images, 2 text",
-                    "preview": "/images/projects/5mc/2-images-2-text.jpg",
-                    "layers": [
-                        {
-                            "name": "left-image",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "children": [
-                                {
-                                    "name": "left-image",
-                                    "type": "image",
-                                    "src": "",
-                                    "variants": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "right-image",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "children": [
-                                {
-                                    "name": "right-image",
-                                    "type": "image",
-                                    "src": "",
-                                    "variants": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "left-text",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 130,
-                                "unit": "pixels"
-                            },
-                            "children": [
-                                {
-                                    "name": "left-text",
-                                    "type": "text",
-                                    "content": "Sample Text"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "right-text",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 130,
-                                "unit": "pixels"
-                            },
-                            "children": [
-                                {
-                                    "name": "right-text",
-                                    "type": "text",
-                                    "content": "Sample Text"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "line",
-                            "type": "shape",
-                            "color": "#ffffff",
-                            "x": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 10,
-                                "unit": "pixels"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "offset": {
-                                "x": {
-                                    "value": 0.5,
-                                    "unit": "percent"
-                                },
-                                "y": {
-                                    "value": 0,
-                                    "unit": "percent"
-                                }
-                            }
-                        }
-                    ],
-                    "fonts": [
-                        {
-                            "fontFamily": "Intro Head",
-                            "variants": [
-                                {
-                                    "style": "",
-                                    "file": "Intro Head H Base.otf"
-                                }
-                            ]
-                        },
-                        {
-                            "fontFamily": "Intro Rust",
-                            "variants": [
-                                {
-                                    "style": "",
-                                    "file": "Fontfabric - Intro Rust Base.otf"
-                                }
-                            ]
-                        },
-                        {
-                            "fontFamily": "Intro Bold",
-                            "variants": [
-                                {
-                                    "style": "",
-                                    "file": "intro_bold.ttf"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "id": "2-images",
-                    "name": "2 images",
-                    "preview": "/images/projects/5mc/2-images.jpg",
-                    "layers": [
-                        {
-                            "name": "left-image",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "children": [
-                                {
-                                    "name": "left-image",
-                                    "type": "image",
-                                    "src": "",
-                                    "variants": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "right-image",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "children": [
-                                {
-                                    "name": "right-image",
-                                    "type": "image",
-                                    "src": "",
-                                    "variants": []
-                                }
-                            ]
-                        },
-                        {
-                            "name": "line",
-                            "type": "shape",
-                            "color": "#ffffff",
-                            "x": {
-                                "value": 0.5,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 10,
-                                "unit": "pixels"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "offset": {
-                                "x": {
-                                    "value": 0.5,
-                                    "unit": "percent"
-                                },
-                                "y": {
-                                    "value": 0,
-                                    "unit": "percent"
-                                }
-                            }
-                        }
-                    ]
-                },
-                {
-                    "id": "1-image",
-                    "name": "1 image",
-                    "preview": "/images/projects/5mc/1-image.jpg",
-                    "layers": [
-                        {
-                            "name": "image",
-                            "type": "group",
-                            "image": "",
-                            "x": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "y": {
-                                "value": 0,
-                                "unit": "percent"
-                            },
-                            "width": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "height": {
-                                "value": 1,
-                                "unit": "percent"
-                            },
-                            "children": [
-                                {
-                                    "name": "image",
-                                    "type": "image",
-                                    "src": "",
-                                    "variants": []
-                                }
-                            ]
-                        }
-                    ]
+                  "name": "left-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
                 }
-            ]
+              ]
+            },
+            {
+              "name": "right-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "right-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "left-text",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 130,
+                "unit": "pixels"
+              },
+              "children": [
+                {
+                  "name": "left-text",
+                  "type": "text",
+                  "content": "Sample Text"
+                }
+              ]
+            },
+            {
+              "name": "right-text",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 130,
+                "unit": "pixels"
+              },
+              "children": [
+                {
+                  "name": "right-text",
+                  "type": "text",
+                  "content": "Sample Text"
+                }
+              ]
+            },
+            {
+              "name": "line",
+              "type": "shape",
+              "color": "#ffffff",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 10,
+                "unit": "pixels"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "offset": {
+                "x": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "percent"
+                }
+              }
+            }
+          ],
+          "fonts": [
+            {
+              "fontFamily": "Intro Head",
+              "variants": [
+                {
+                  "style": "",
+                  "file": "Intro Head H Base.otf"
+                }
+              ]
+            },
+            {
+              "fontFamily": "Intro Rust",
+              "variants": [
+                {
+                  "style": "",
+                  "file": "Fontfabric - Intro Rust Base.otf"
+                }
+              ]
+            },
+            {
+              "fontFamily": "Intro Bold",
+              "variants": [
+                {
+                  "style": "",
+                  "file": "intro_bold.ttf"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2-images",
+          "name": "2 images",
+          "preview": "/images/projects/5mc/2-images.jpg",
+          "overlay": ["images"],
+          "layers": [
+            {
+              "name": "left-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "left-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "right-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "right-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "line",
+              "type": "shape",
+              "color": "#ffffff",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 10,
+                "unit": "pixels"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "offset": {
+                "x": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "percent"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "1-image",
+          "name": "1 image",
+          "preview": "/images/projects/5mc/1-image.jpg",
+          "overlay": ["images"],
+          "layers": [
+            {
+              "name": "image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2-images-with-assets",
+          "name": "2 images with assets",
+          "preview": "/images/projects/5mc/2-images-with-assets.jpg",
+          "assetsVariants": ["Bold", "Curwed", "Circle"],
+          "selectedVariant": 0,
+          "position": 1,
+          "layers": [
+            {
+              "name": "left-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "left-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "right-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "right-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "line",
+              "type": "shape",
+              "color": "#ffffff",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 10,
+                "unit": "pixels"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "offset": {
+                "x": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "percent"
+                }
+              }
+            },
+            {
+              "name": "cross",
+              "type": "asset",
+              "startPoint": {
+                "x": { "value": 960, "unit": "pixels" },
+                "y": { "value": 0, "unit": "pixels" },
+                "offsetX": { "value": 1, "unit": "percent" },
+                "offsetY": { "value": 0, "unit": "percent" },
+                "padding": {
+                  "x": { "value": -60, "unit": "pixels" },
+                  "y": { "value": 45, "unit": "pixels" }
+                }
+              },
+              "endPoint": {
+                "x": { "value": 0, "unit": "pixels" },
+                "y": { "value": 0, "unit": "pixels" },
+                "offsetX": { "value": 0, "unit": "percent" },
+                "offsetY": { "value": 0, "unit": "percent" },
+                "padding": {
+                  "x": { "value": 60, "unit": "pixels" },
+                  "y": { "value": 45, "unit": "pixels" }
+                }
+              },
+
+              "src": ["/assets/cross_bold.png", "/assets/cross_curwed.png", "/assets/cross_circle.png"]
+            },
+            {
+              "name": "check",
+              "type": "asset",
+              "startPoint": {
+                "x": { "value": 1920, "unit": "pixels" },
+                "y": { "value": 0, "unit": "pixels" },
+                "offsetX": { "value": 1, "unit": "percent" },
+                "offsetY": { "value": 0, "unit": "percent" },
+                "padding": {
+                  "x": { "value": -60, "unit": "pixels" },
+                  "y": { "value": 45, "unit": "pixels" }
+                }
+              },
+              "endPoint": {
+                "x": { "value": 960, "unit": "pixels" },
+                "y": { "value": 0, "unit": "pixels" },
+                "offsetX": { "value": 0, "unit": "percent" },
+                "offsetY": { "value": 0, "unit": "percent" },
+                "padding": {
+                  "x": { "value": 60, "unit": "pixels" },
+                  "y": { "value": 45, "unit": "pixels" }
+                }
+              },
+              "src": ["/assets/check_bold.png", "/assets/check_curwed.png", "/assets/check_circle.png"]
+            }
+          ],
+          "overlay": ["images", "assets"]
+        },
+        {
+          "id": "2-images-with-arrows",
+          "name": "2 images with arrows",
+          "preview": "/images/projects/5mc/2-images-with-arrows.jpg",
+          "assetsVariants": ["Straight Red", "Curved Red", "Straight Yellow", "Curved Yellow"],
+          "allowFlip": true,
+          "flipX": false,
+          "flipY": false,
+          "selectedAsset": 0,
+          "position": 0.5,
+          "layers": [
+            {
+              "name": "left-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "left-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "right-image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "right-image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            },
+            {
+              "name": "line",
+              "type": "shape",
+              "color": "#ffffff",
+              "x": {
+                "value": 0.5,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 10,
+                "unit": "pixels"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "offset": {
+                "x": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "percent"
+                }
+              }
+            },
+            {
+              "name": "arrow",
+              "type": "asset",
+              "startPoint": {
+                "x": { "value": 960, "unit": "pixels" },
+                "y": { "value": 0, "unit": "pixels" },
+                "offsetX": { "value": 0.5, "unit": "percent" },
+                "offsetY": { "value": 0, "unit": "percent" },
+                "padding": {
+                  "x": { "value": 0, "unit": "pixels" },
+                  "y": { "value": 45, "unit": "pixels" }
+                }
+              },
+              "endPoint": {
+                "x": { "value": 960, "unit": "pixels" },
+                "y": { "value": 1080, "unit": "pixels" },
+                "offsetX": { "value": 0.5, "unit": "percent" },
+                "offsetY": { "value": 1, "unit": "percent" },
+                "padding": {
+                  "x": { "value": 0, "unit": "pixels" },
+                  "y": { "value": -45, "unit": "pixels" }
+                }
+              },
+              "defaultPosition": 0.5,
+              "src": [
+                "/assets/arrow_straight_red.png",
+                "/assets/arrow_curwed_red.png",
+                "/assets/arrow_straight_yellow.png",
+                "/assets/arrow_curwed_yellow.png"
+              ]
+            }
+          ],
+          "overlay": ["images", "assets"]
         }
-    ]
+      ]
+    }
+  ]
 }

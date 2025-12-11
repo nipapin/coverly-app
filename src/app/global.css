@@ -1,46 +1,46 @@
 *,
 *::before,
 *::after {
-	box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 a {
-	text-decoration: none;
+  text-decoration: none;
 }
 
 body {
-	padding: 0;
-	margin: 0;
-	overflow: hidden;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 #main-canvas {
-	position: relative;
+  position: relative;
 }
 
 .droplet {
-	position: absolute;
-	z-index: 10000;
-	background-color: #eef4ed30;
-	border-radius: 10px;
-	transition: opacity 0.3s ease;
-	cursor: pointer;
-	border: 1px solid transparent;
+  position: absolute;
+  z-index: 900;
+  background-color: #eef4ed30;
+  border-radius: 10px;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
 .droplet:hover {
-	border-color: #8da9c4;
+  border-color: #8da9c4;
 }
 
 .MuiPaper-root.bottom-toolbar {
-	position: absolute;
-	bottom: 1rem;
-	left: 50%;
-	z-index: 1000;
-	transform: translateX(-50%);
-	padding: 1rem;
-	border-radius: 99rem;
-	display: flex;
-	align-items: center;
-	gap: 1rem;
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  z-index: 1000;
+  transform: translateX(-50%);
+  padding: 1rem;
+  border-radius: 99rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
