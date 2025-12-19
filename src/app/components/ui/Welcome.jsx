@@ -1,61 +1,65 @@
 "use client";
 
-import { themeConfig } from "@/theme/themeConfig";
 import Loader from "@/app/components/utilities/Loader";
+import { themeConfig } from "@/theme/themeConfig";
 import { Box, Container, Divider, List, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import ProjectCard from "./ProjectCard";
+import ProjectHistory from "./ProjectHistory";
 
 export default function Welcome({ version }) {
-	const [projects, setProjects] = useState([]);
-	const [pending, setPending] = useState(true);
-	useEffect(() => {
-		fetch("/api/projects")
-			.then((res) => res.json())
-			.then((data) => setProjects(data.projects))
-			.finally(() => setPending(false));
-	}, []);
-	if (pending) return <Loader />;
-	return (
-		<Box
-			sx={{
-				background: themeConfig.palette.background.default,
-				width: "100vw",
-				height: "100vh",
-				zIndex: 999
-			}}
-		>
-			<Container maxWidth='lg' sx={{ padding: "2rem 0" }}>
-				<Typography variant='h1' fontSize={"2rem"} fontWeight={600} position='relative' display='inline-block'>
-					Coverly{" "}
-					<Typography
-						component='span'
-						sx={{
-							position: "absolute",
-							top: 0,
-							left: "100%",
-							padding: "0.125rem 0.25rem",
-							ml: "10px",
-							fontSize: "10px",
-							fontWeight: 600, 
-							backgroundColor: "white",
-							color: "black",
-							borderRadius: "25rem"
-						}}
-					>
-						{version}
-					</Typography>
-				</Typography>
-				<Divider sx={{ margin: "2rem 0" }} />
-				<Typography variant='h2' fontSize={"1.5rem"} fontWeight={400} my={"1rem"}>
-					Projects
-				</Typography>
-				<List>
-					{projects.map((project) => (
-						<ProjectCard key={project.id} project={project} />
-					))}
-				</List>
-			</Container>
-		</Box>
-	);
+  const [projects, setProjects] = useState([]);
+  const [pending, setPending] = useState(true);
+  useEffect(() => {
+    fetch("/api/projects")
+      .then((res) => res.json())
+      .then((data) => setProjects(data.projects))
+      .finally(() => setPending(false));
+  }, []);
+  if (pending) return <Loader />;
+  return (
+    <Box
+      sx={{
+        background: themeConfig.palette.background.default,
+        width: "100vw",
+        height: "100vh",
+        zIndex: 999,
+      }}
+    >
+      <Container maxWidth="lg" sx={{ padding: "2rem 0" }}>
+        <Typography variant="h1" fontSize={"2rem"} fontWeight={600} position="relative" display="inline-block">
+          Coverly{" "}
+          <Typography
+            component="span"
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: "100%",
+              padding: "0.125rem 0.25rem",
+              ml: "10px",
+              fontSize: "10px",
+              fontWeight: 600,
+              backgroundColor: "white",
+              color: "black",
+              borderRadius: "25rem",
+            }}
+          >
+            {version}
+          </Typography>
+        </Typography>
+        <Divider sx={{ margin: "2rem 0" }} />
+        <Box display={"flex"} flexDirection={"row"} justifyContent={"space-between"} alignItems={"center"}>
+          <Typography variant="h2" fontSize={"1.5rem"} fontWeight={400} my={"1rem"}>
+            Projects
+          </Typography>
+          <ProjectHistory />
+        </Box>
+        <List>
+          {projects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </List>
+      </Container>
+    </Box>
+  );
 }

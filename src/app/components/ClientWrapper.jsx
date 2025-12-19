@@ -10,9 +10,14 @@ export default function ClientWrapper() {
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
-    setTimeout(() => {
+    window.localStorage.setItem("coverly-template-history", JSON.stringify([]));
+    window.localStorage.setItem("coverly-template-history-index", 0);
+    const timeout = setTimeout(() => {
       setPending(false);
     }, 1000);
+    return () => {
+      clearTimeout(timeout);
+    };
   }, []);
 
   return (

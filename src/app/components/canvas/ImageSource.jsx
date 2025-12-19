@@ -34,15 +34,14 @@ export default function ImageSource({ variant, visible, layerName }) {
       const img = imageRef.current;
       const parent = img.getParent();
       if (!parent) return;
-
-      if (templateLayer.clientRect) {
-        const width = imageSource.width * templateLayer.transform.scaleX;
-        const height = imageSource.height * templateLayer.transform.scaleY;
+      if (templateLayer.transform) {
         img.setAttrs({
+          width: templateLayer.transform.width,
+          height: templateLayer.transform.height,
           scaleX: templateLayer.transform.scaleX,
           scaleY: templateLayer.transform.scaleY,
-          x: templateLayer.clientRect.x,
-          y: templateLayer.clientRect.y,
+          x: templateLayer.transform.x,
+          y: templateLayer.transform.y,
           offsetX: 0,
           offsetY: 0,
         });

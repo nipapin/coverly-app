@@ -1,11 +1,25 @@
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { Close } from "@mui/icons-material";
-import { Avatar, Badge, Box, Card, CardActionArea, CardContent, IconButton, TextField, Typography } from "@mui/material";
+import { AutoFixHigh, Close } from "@mui/icons-material";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Card,
+  CardActionArea,
+  CardContent,
+  CircularProgress,
+  IconButton,
+  TextField,
+  Typography,
+} from "@mui/material";
+import { useState } from "react";
 
 export default function ImageCardContent({ variants, src, name }) {
   const { template, setTemplate } = useTemplateStore();
   const layer = template.layers.find((layer) => layer.name === name);
   const source = layer.children[0];
+  const [prompt, setPrompt] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRemove = (variantSrc) => {
     const modifiedTemplate = {
@@ -23,6 +37,19 @@ export default function ImageCardContent({ variants, src, name }) {
     setTemplate(modifiedTemplate);
   };
 
+  const handleAutoFix = () => {
+    setIsLoading(true);
+    fetch(`/api/enhance-prompt`, {
+      method: "POST",
+      body: JSON.stringify({ prompt: prompt.trim(), image: source.src }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setIsLoading(false);
+        setPrompt(data.result);
+      });
+  };
+
   const handleSelect = (variantSrc) => {
     const modifiedTemplate = {
       ...template,
@@ -38,7 +65,26 @@ export default function ImageCardContent({ variants, src, name }) {
 
   return (
     <CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.25rem", pt: 0, pb: "0.25rem" }}>
-      <TextField fullWidth label="Prompt" placeholder="Enter prompt (optional)" rows={2} multiline name="prompt" />
+      <Box position="relative" sx={{ "&::-webkit-scrollbar": { display: "none" } }}>
+        <IconButton sx={{ position: "absolute", top: "0.5rem", right: "0.5rem", zIndex: 1000 }} onClick={handleAutoFix}>
+          {isLoading ? <CircularProgress size={16} /> : <AutoFixHigh fontSize="small" />}
+        </IconButton>
+        <TextField
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          fullWidth
+          label="Prompt"
+          placeholder="Enter prompt (optional)"
+          rows={2}
+          multiline
+          name="prompt"
+          sx={{
+            opacity: isLoading ? 0.5 : 1,
+            "& textarea::-webkit-scrollbar": { display: "none" },
+            "& textarea": { paddingRight: "2rem" },
+          }}
+        />
+      </Box>
       {variants.length > 0 ? (
         <Box>
           <Typography variant="body2" sx={{ opacity: 0.5, mb: "0.5rem" }}>

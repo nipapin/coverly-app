@@ -1,11 +1,12 @@
 import { useStageStore } from "../stores/StageStore";
 import { useTemplateStore } from "../stores/TemplateStore";
-import { useImageTransform } from "./useImageTransform";
 
 const saveTransform = (node) => {
   return {
     x: node.x(),
     y: node.y(),
+    width: node.width(),
+    height: node.height(),
     scaleX: node.scaleX(),
     scaleY: node.scaleY(),
     rotation: node.rotation(),
@@ -34,7 +35,12 @@ export const useTransform = () => {
               ...child,
               variants: child.variants.map((variant) =>
                 variant.src === child.src
-                  ? { ...variant, transform: { ...transform, manual: e.manual }, clientRect: { ...absolutePosition } }
+                  ? {
+                      ...variant,
+                      transform: { ...transform, manual: e.manual },
+                      clientRect: { ...absolutePosition },
+                      id: crypto.randomUUID(),
+                    }
                   : variant
               ),
             })),
@@ -43,7 +49,6 @@ export const useTransform = () => {
         return layer;
       }),
     };
-    console.log(modifiedTemplate);
     setTemplate(modifiedTemplate);
   };
 

@@ -5,7 +5,7 @@ export default function ImageView({ item }) {
   return item.variants.length > 0 ? (
     <>
       {item.variants.map((variant) => (
-        <ImageSource key={variant.src} variant={variant} visible={variant.src === item.src} layerName={item.name} />
+        <ImageSource key={variant.id || variant.src} variant={variant} visible={variant.src === item.src} layerName={item.name} />
       ))}
     </>
   ) : (

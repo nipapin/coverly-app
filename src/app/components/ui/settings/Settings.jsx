@@ -1,10 +1,9 @@
-import { useTemplateExport } from "@/app/hooks/useTemplateExport";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { Download, Save } from "@mui/icons-material";
-import { Box, Button, Divider, Paper, Typography } from "@mui/material";
+import { Box, Button, Divider, Paper } from "@mui/material";
 import { useState } from "react";
 import AssetsTab from "./assets/AssetsTab";
 import ImagesTab from "./images/ImagesTab";
+import SettingsHeader from "./SettingsHeader";
 import TextsTab from "./texts/TextsTab";
 
 const TabMap = {
@@ -15,38 +14,8 @@ const TabMap = {
 
 export default function Settings() {
   const { template } = useTemplateStore();
-  const { exportTemplateView } = useTemplateExport();
   const [activeTab, setActiveTab] = useState("images");
-  const [isSaving, setIsSaving] = useState(false);
   const tabs = template?.overlay || [];
-
-  const handleExport = async () => {
-    try {
-      const date = new Date().toLocaleDateString();
-      const time = new Date().toLocaleTimeString();
-      const filename = `template_export_${date}_${time}.jpg`;
-
-      await exportTemplateView(filename);
-    } catch (error) {
-      console.error("Export failed:", error);
-    }
-  };
-  const handleSave = async () => {
-    try {
-      setIsSaving(true);
-      const pathname = window.location.pathname;
-      const sessionId = pathname.split("/").pop();
-      fetch(`/api/workflow/save`, {
-        method: "POST",
-        body: JSON.stringify({ sessionId, template }),
-      }).then((res) => {
-        console.log(res);
-        setIsSaving(false);
-      });
-    } catch (error) {
-      console.error("Save failed:", error);
-    }
-  };
 
   return (
     <Paper
@@ -65,7 +34,7 @@ export default function Settings() {
         flexDirection: "column",
       }}
     >
-      <Typography>Settings</Typography>
+      <SettingsHeader />
       <Divider sx={{ my: "1rem" }} />
       <Box display={"flex"} gap={"0.5rem"}>
         {tabs.map((tab) => {
@@ -79,14 +48,6 @@ export default function Settings() {
       </Box>
       <Divider sx={{ my: "1rem" }} />
       {TabMap[activeTab]?.component || <></>}
-      <Box sx={{ mt: "auto", display: "flex", flexDirection: "row", gap: "0.5rem" }}>
-        <Button variant="contained" startIcon={<Save />} fullWidth onClick={handleSave} disabled={isSaving}>
-          Save
-        </Button>
-        <Button variant="contained" startIcon={<Download />} fullWidth onClick={handleExport}>
-          Export
-        </Button>
-      </Box>
     </Paper>
   );
 }
