@@ -20,6 +20,7 @@ export default function ImageCardContent({ variants, src, name }) {
   const source = layer.children[0];
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lines, setLines] = useState(2);
 
   const handleRemove = (variantSrc) => {
     const modifiedTemplate = {
@@ -63,6 +64,10 @@ export default function ImageCardContent({ variants, src, name }) {
     setTemplate(modifiedTemplate);
   };
 
+  const toggleTextField = (isFocused) => (e) => {
+    setLines(Math.max(2, isFocused * 8));
+  };
+
   return (
     <CardContent sx={{ display: "flex", flexDirection: "column", gap: "0.25rem", pt: 0, pb: "0.25rem" }}>
       <Box position="relative" sx={{ "&::-webkit-scrollbar": { display: "none" } }}>
@@ -72,16 +77,18 @@ export default function ImageCardContent({ variants, src, name }) {
         <TextField
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
+          onFocus={toggleTextField(true)}
+          onBlur={toggleTextField(false)}
           fullWidth
           label="Prompt"
           placeholder="Enter prompt (optional)"
-          rows={2}
+          rows={lines}
           multiline
           name="prompt"
           sx={{
             opacity: isLoading ? 0.5 : 1,
             "& textarea::-webkit-scrollbar": { display: "none" },
-            "& textarea": { paddingRight: "2rem" },
+            "& textarea": { paddingRight: "2rem", fontSize: "14px" },
           }}
         />
       </Box>

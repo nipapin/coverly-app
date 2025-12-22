@@ -32,16 +32,29 @@ export default function ImagesTab() {
   }, [template]);
 
   return (
-    <Box display="flex" flexDirection="column" gap="0.5rem">
+    <Box
+      display="flex"
+      flexDirection="column"
+      gap="0.5rem"
+      minHeight="0"
+      overflow="auto"
+      sx={{
+        "&::-webkit-scrollbar": { width: "10px" },
+        "&::-webkit-scrollbar-track": { backgroundh: "#13315C" },
+        "&::-webkit-scrollbar-thumb": { background: "white", borderRadius: "0.5rem", border: "4px solid #13315C" },
+      }}
+    >
       <ModelSelector />
       {layers.length > 1 && (
         <Button variant="outlined" color="primary" startIcon={<SwapHoriz />} onClick={handleSwapImages}>
           Swap Images
         </Button>
       )}
-      {swapImages
-        ? layers.reverse().map((layer) => <ImageCard key={layer.name} layer={layer} />)
-        : layers.map((layer) => <ImageCard key={layer.name} layer={layer} />)}
+      <Box display="flex" flexDirection="column" gap="0.5rem">
+        {swapImages
+          ? layers.reverse().map((layer) => <ImageCard key={layer.name} layer={layer} />)
+          : layers.map((layer) => <ImageCard key={layer.name} layer={layer} />)}
+      </Box>
     </Box>
   );
 }

@@ -60,35 +60,18 @@ export function useTemplateExport() {
         height: originalHeight,
       });
 
-      const outputImage = new Image();
-      outputImage.src = dataURL;
-      outputImage.width = 1280;
-      outputImage.height = 720;
-
-      document.body.appendChild(outputImage);
-
-      const outputCanvas = document.createElement("canvas");
-      outputCanvas.width = 1280;
-      outputCanvas.height = 720;
-      const outputContext = outputCanvas.getContext("2d");
-      outputContext.drawImage(outputImage, 0, 0, 1280, 720);
-      const outputDataURL = outputCanvas.toDataURL("image/jpeg", 0.8);
-
-      document.body.appendChild(outputCanvas);
-
-      // Создаем ссылку для скачивания
+      const response = await fetch("/api/export", {
+        method: "POST",
+        body: JSON.stringify({ image: dataURL }),
+      });
+      const data = await response.json();
       const link = document.createElement("a");
       link.download = filename;
-      link.href = outputDataURL;
-
-      // Добавляем ссылку в DOM, кликаем и удаляем
+      link.href = data.image;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(outputCanvas);
-      document.body.removeChild(outputImage);
-      document.body.removeChild(link);
 
-      return outputDataURL;
+      return data.image;
     } catch (error) {
       console.error("Error exporting template:", error);
       throw error;
