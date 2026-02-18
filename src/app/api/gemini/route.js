@@ -50,8 +50,8 @@ export async function POST(request) {
         if (part.inlineData) {
             const imageData = part.inlineData.data;
             const imageBuffer = Buffer.from(imageData, "base64");
-            await sharp(imageBuffer).resize(originalSize[0], originalSize[1]).toBuffer();
-            return NextResponse.json({ image: imageBuffer.toString("base64") }, { status: 200 });
+            const resizedImageBuffer = await sharp(imageBuffer).resize({ width: originalSize[0], height: originalSize[1], fit: "contain" }).toBuffer();
+            return NextResponse.json({ image: resizedImageBuffer.toString("base64") }, { status: 200 });
         }
     }
     return NextResponse.json({ error: "Failed to generate image" }, { status: 500 });
