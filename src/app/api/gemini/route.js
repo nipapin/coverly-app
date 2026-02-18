@@ -4,12 +4,13 @@ import sharp from "sharp";
 
 const genai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
+    vertexai: false,
 });
 
-export async function POST(request: Request) {
+export async function POST(request) {
     const formData = await request.formData();
-    const image = formData.get("image") as string;
-    const text = formData.get("text") as string;
+    const image = formData.get("image");
+    const text = formData.get("text");
     const imageBuffer = Buffer.from(image, "base64");
     const imageMeta = await sharp(imageBuffer).metadata();
     const mimeType = `image/${imageMeta.format}`;
@@ -37,7 +38,7 @@ export async function POST(request: Request) {
         .then((response) => {
             return { parts: response.candidates?.[0]?.content?.parts || [] };
         })
-        .catch((error: any) => {
+        .catch((error) => {
             return { error: error.message };
         });
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
 
     for (const part of response.parts) {
         if (part.inlineData) {
-            const imageData = part.inlineData.data as string;
+            const imageData = part.inlineData.data;
             const imageBuffer = Buffer.from(imageData, "base64");
             await sharp(imageBuffer).resize(originalSize[0], originalSize[1]).toBuffer();
             return NextResponse.json({ image: imageBuffer.toString("base64") }, { status: 200 });
