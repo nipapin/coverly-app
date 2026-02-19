@@ -7,64 +7,83 @@ const genai = new GoogleGenAI({
     vertexai: false,
 });
 
+// Reusable headers for CORS
+const corsHeaders = {
+    'Access-Control-Allow-Origin': 'http://localhost:3002', // Be specific for security
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
 
 export async function OPTIONS() {
     return new Response(null, {
         status: 204,
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        },
+        headers: corsHeaders,
     });
 }
 
 export async function POST(request) {
-    const formData = await request.formData();
-    const image = formData.get("image");
-    const text = formData.get("text");
-    const imageBuffer = Buffer.from(image, "base64");
-    const imageMeta = await sharp(imageBuffer).metadata();
-    const mimeType = `image/${imageMeta.format}`;
-    const originalSize = [imageMeta.width, imageMeta.height];
+    try {
+        const formData = await request.formData();
+        const image = formData.get("image");
+        const text = formData.get("text");
+        const imageBuffer = Buffer.from(image, "base64");
+        const imageMeta = await sharp(imageBuffer).metadata();
+        const mimeType = `image/${imageMeta.format}`;
+        const originalSize = [imageMeta.width, imageMeta.height];
 
-    const prompt = [
-        { text: text },
-        {
-            inlineData: {
-                mimeType: mimeType,
-                data: image,
+        const prompt = [
+            { text: text },
+            {
+                inlineData: {
+                    mimeType: mimeType,
+                    data: image,
+                },
             },
-        },
-    ];
+        ];
 
-    const response = await genai.models
-        .generateContent({
-            model: "gemini-3-pro-image-preview",
-            contents: prompt,
-            config: {
-                responseModalities: ["IMAGE"],
-                candidateCount: 1,
-            },
-        })
-        .then((response) => {
-            return { parts: response.candidates?.[0]?.content?.parts || [] };
-        })
-        .catch((error) => {
-            return { error: error.message };
+        const geminiResponse = await genai.models
+            .generateContent({
+                model: "gemini-3-pro-image-preview",
+                contents: prompt,
+                config: {
+                    responseModalities: ["IMAGE"],
+                    candidateCount: 1,
+                },
+            })
+            .then((response) => ({ parts: response.candidates?.[0]?.content?.parts || [] }))
+            .catch((error) => ({ error: error.message }));
+
+        if ("error" in geminiResponse) {
+            return NextResponse.json({ error: geminiResponse.error }, {
+                status: 500,
+                headers: corsHeaders
+            });
+        }
+
+        for (const part of geminiResponse.parts) {
+            if (part.inlineData) {
+                const imageData = part.inlineData.data;
+                const outputBuffer = Buffer.from(imageData, "base64");
+                const resizedImageBuffer = await sharp(outputBuffer)
+                    .resize({ width: originalSize[0], height: originalSize[1], fit: "contain" })
+                    .toBuffer();
+
+                return NextResponse.json(
+                    { image: resizedImageBuffer.toString("base64") },
+                    { status: 200, headers: corsHeaders }
+                );
+            }
+        }
+
+        return NextResponse.json({ error: "Failed to generate image" }, {
+            status: 500,
+            headers: corsHeaders
         });
 
-    if ("error" in response) {
-        return NextResponse.json({ error: response.error }, { status: 500 });
+    } catch (err) {
+        return NextResponse.json({ error: "Internal Server Error" }, {
+            status: 500,
+            headers: corsHeaders
+        });
     }
-
-    for (const part of response.parts) {
-        if (part.inlineData) {
-            const imageData = part.inlineData.data;
-            const imageBuffer = Buffer.from(imageData, "base64");
-            const resizedImageBuffer = await sharp(imageBuffer).resize({ width: originalSize[0], height: originalSize[1], fit: "contain" }).toBuffer();
-            return NextResponse.json({ image: resizedImageBuffer.toString("base64") }, { status: 200 });
-        }
-    }
-    return NextResponse.json({ error: "Failed to generate image" }, { status: 500 });
 }
