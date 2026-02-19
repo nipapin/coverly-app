@@ -9,7 +9,7 @@ const genai = new GoogleGenAI({
 
 // Reusable headers for CORS
 const corsHeaders = {
-    'Access-Control-Allow-Origin': 'http://localhost:3002', // Be specific for security
+    'Access-Control-Allow-Origin': '*', // Be specific for security
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
@@ -23,9 +23,7 @@ export async function OPTIONS() {
 
 export async function POST(request) {
     try {
-        const formData = await request.formData();
-        const image = formData.get("image");
-        const text = formData.get("text");
+        const { image, text } = await request.json();
         const imageBuffer = Buffer.from(image, "base64");
         const imageMeta = await sharp(imageBuffer).metadata();
         const mimeType = `image/${imageMeta.format}`;
@@ -33,12 +31,7 @@ export async function POST(request) {
 
         const prompt = [
             { text: text },
-            {
-                inlineData: {
-                    mimeType: mimeType,
-                    data: image,
-                },
-            },
+            { inlineData: { mimeType: mimeType, data: image } },
         ];
 
         const geminiResponse = await genai.models
@@ -81,7 +74,7 @@ export async function POST(request) {
         });
 
     } catch (err) {
-        return NextResponse.json({ error: "Internal Server Error" }, {
+        return NextResponse.json({ error: err.message || "Internal Server Error" }, {
             status: 500,
             headers: corsHeaders
         });
