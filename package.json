@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "deploy": "git pull && sudo rm -rf .next && npm run build && pm2 reload all"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
