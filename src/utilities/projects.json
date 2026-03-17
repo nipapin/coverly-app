@@ -8,7 +8,10 @@
           "id": "2-images-2-text",
           "name": "2 images, 2 text",
           "preview": "/images/projects/5mc/2-images-2-text.jpg",
-          "overlay": ["images", "texts"],
+          "overlay": [
+            "images",
+            "texts"
+          ],
           "layers": [
             {
               "name": "left-image",
@@ -190,7 +193,9 @@
           "id": "2-images",
           "name": "2 images",
           "preview": "/images/projects/5mc/2-images.jpg",
-          "overlay": ["images"],
+          "overlay": [
+            "images"
+          ],
           "layers": [
             {
               "name": "left-image",
@@ -287,7 +292,9 @@
           "id": "1-image",
           "name": "1 image",
           "preview": "/images/projects/5mc/1-image.jpg",
-          "overlay": ["images"],
+          "overlay": [
+            "images"
+          ],
           "layers": [
             {
               "name": "image",
@@ -324,7 +331,11 @@
           "id": "2-images-with-assets",
           "name": "2 images with assets",
           "preview": "/images/projects/5mc/2-images-with-assets.jpg",
-          "assetsVariants": ["Bold", "Curwed", "Circle"],
+          "assetsVariants": [
+            "Bold",
+            "Curwed",
+            "Circle"
+          ],
           "selectedVariant": 0,
           "position": 1,
           "layers": [
@@ -421,61 +432,148 @@
               "name": "cross",
               "type": "asset",
               "startPoint": {
-                "x": { "value": 960, "unit": "pixels" },
-                "y": { "value": 0, "unit": "pixels" },
-                "offsetX": { "value": 1, "unit": "percent" },
-                "offsetY": { "value": 0, "unit": "percent" },
+                "x": {
+                  "value": 960,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 1,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 0,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": -60, "unit": "pixels" },
-                  "y": { "value": 45, "unit": "pixels" }
+                  "x": {
+                    "value": -60,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 45,
+                    "unit": "pixels"
+                  }
                 }
               },
               "endPoint": {
-                "x": { "value": 0, "unit": "pixels" },
-                "y": { "value": 0, "unit": "pixels" },
-                "offsetX": { "value": 0, "unit": "percent" },
-                "offsetY": { "value": 0, "unit": "percent" },
+                "x": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 0,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 0,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": 60, "unit": "pixels" },
-                  "y": { "value": 45, "unit": "pixels" }
+                  "x": {
+                    "value": 60,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 45,
+                    "unit": "pixels"
+                  }
                 }
               },
-
-              "src": ["/assets/cross_bold.png", "/assets/cross_curwed.png", "/assets/cross_circle.png"]
+              "src": [
+                "/assets/cross_bold.png",
+                "/assets/cross_curwed.png",
+                "/assets/cross_circle.png"
+              ]
             },
             {
               "name": "check",
               "type": "asset",
               "startPoint": {
-                "x": { "value": 1920, "unit": "pixels" },
-                "y": { "value": 0, "unit": "pixels" },
-                "offsetX": { "value": 1, "unit": "percent" },
-                "offsetY": { "value": 0, "unit": "percent" },
+                "x": {
+                  "value": 1920,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 1,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 0,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": -60, "unit": "pixels" },
-                  "y": { "value": 45, "unit": "pixels" }
+                  "x": {
+                    "value": -60,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 45,
+                    "unit": "pixels"
+                  }
                 }
               },
               "endPoint": {
-                "x": { "value": 960, "unit": "pixels" },
-                "y": { "value": 0, "unit": "pixels" },
-                "offsetX": { "value": 0, "unit": "percent" },
-                "offsetY": { "value": 0, "unit": "percent" },
+                "x": {
+                  "value": 960,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 0,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 0,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": 60, "unit": "pixels" },
-                  "y": { "value": 45, "unit": "pixels" }
+                  "x": {
+                    "value": 60,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 45,
+                    "unit": "pixels"
+                  }
                 }
               },
-              "src": ["/assets/check_bold.png", "/assets/check_curwed.png", "/assets/check_circle.png"]
+              "src": [
+                "/assets/check_bold.png",
+                "/assets/check_curwed.png",
+                "/assets/check_circle.png"
+              ]
             }
           ],
-          "overlay": ["images", "assets"]
+          "overlay": [
+            "images",
+            "assets"
+          ]
         },
         {
           "id": "2-images-with-arrows",
           "name": "2 images with arrows",
           "preview": "/images/projects/5mc/2-images-with-arrows.jpg",
-          "assetsVariants": ["Straight Red", "Curved Red", "Straight Yellow", "Curved Yellow"],
+          "assetsVariants": [
+            "Straight Red",
+            "Curved Red",
+            "Straight Yellow",
+            "Curved Yellow"
+          ],
           "allowFlip": true,
           "flipX": false,
           "flipY": false,
@@ -575,23 +673,59 @@
               "name": "arrow",
               "type": "asset",
               "startPoint": {
-                "x": { "value": 960, "unit": "pixels" },
-                "y": { "value": 0, "unit": "pixels" },
-                "offsetX": { "value": 0.5, "unit": "percent" },
-                "offsetY": { "value": 0, "unit": "percent" },
+                "x": {
+                  "value": 960,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 0,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 0,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": 0, "unit": "pixels" },
-                  "y": { "value": 45, "unit": "pixels" }
+                  "x": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 45,
+                    "unit": "pixels"
+                  }
                 }
               },
               "endPoint": {
-                "x": { "value": 960, "unit": "pixels" },
-                "y": { "value": 1080, "unit": "pixels" },
-                "offsetX": { "value": 0.5, "unit": "percent" },
-                "offsetY": { "value": 1, "unit": "percent" },
+                "x": {
+                  "value": 960,
+                  "unit": "pixels"
+                },
+                "y": {
+                  "value": 1080,
+                  "unit": "pixels"
+                },
+                "offsetX": {
+                  "value": 0.5,
+                  "unit": "percent"
+                },
+                "offsetY": {
+                  "value": 1,
+                  "unit": "percent"
+                },
                 "padding": {
-                  "x": { "value": 0, "unit": "pixels" },
-                  "y": { "value": -45, "unit": "pixels" }
+                  "x": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": -45,
+                    "unit": "pixels"
+                  }
                 }
               },
               "defaultPosition": 0.5,
@@ -603,7 +737,50 @@
               ]
             }
           ],
-          "overlay": ["images", "assets"]
+          "overlay": [
+            "images",
+            "assets"
+          ]
+        },
+        {
+          "id": "translate-image",
+          "name": "Translate image",
+          "preview": "/images/projects/5mc/1-image.jpg",
+          "layers": [
+            {
+              "name": "image",
+              "type": "group",
+              "image": "",
+              "x": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "y": {
+                "value": 0,
+                "unit": "percent"
+              },
+              "width": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "height": {
+                "value": 1,
+                "unit": "percent"
+              },
+              "children": [
+                {
+                  "name": "image",
+                  "type": "image",
+                  "src": "",
+                  "variants": []
+                }
+              ]
+            }
+          ],
+          "overlay": [
+            "images",
+            "translate"
+          ]
         }
       ]
     }

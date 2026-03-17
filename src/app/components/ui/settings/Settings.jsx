@@ -5,11 +5,13 @@ import AssetsTab from "./assets/AssetsTab";
 import ImagesTab from "./images/ImagesTab";
 import SettingsHeader from "./SettingsHeader";
 import TextsTab from "./texts/TextsTab";
+import TranslateTab from "./translate/TranslateTab";
 
 const TabMap = {
   images: { id: "images", name: "Images", component: <ImagesTab /> },
   texts: { id: "texts", name: "Texts", component: <TextsTab /> },
   assets: { id: "assets", name: "Assets", component: <AssetsTab /> },
+  translate: { id: "translate", name: "Translate", component: <TranslateTab /> },
 };
 
 export default function Settings() {
