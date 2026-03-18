@@ -180,6 +180,7 @@ export function usePreviewRules(authToken, onUnauthorized) {
     saveError,
     saveSuccess,
     setSelectedIndex,
+    setDialogValue,
     openCreateDialog,
     openEditDialog,
     handleDialogSave,
