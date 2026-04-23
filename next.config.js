@@ -4,6 +4,8 @@ const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'),
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     deploymentId: `build-${pkg.version}`,
+    // Do not bundle ffmpeg-static — Turbopack would rewrite the binary path to \\ROOT\\… (ENOENT).
+    serverExternalPackages: ['ffmpeg-static'],
     experimental: {
         serverActions: {
             allowedOrigins: ['http://localhost']

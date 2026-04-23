@@ -1,4 +1,4 @@
-const createPrompt = ({ positivePrompt, filename }) => ({
+export const createPrompt = ({ positivePrompt, filename }) => ({
 	6: {
 		inputs: {
 			text: `enhance image, improve color correction, make it more vibrant and eye-catching. Add edits from user: ${positivePrompt}`,
@@ -159,7 +159,3 @@ const createPrompt = ({ positivePrompt, filename }) => ({
 		}
 	}
 });
-
-module.exports = {
-	createPrompt
-};
