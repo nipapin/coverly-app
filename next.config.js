@@ -1,6 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+import pkg from './package.json' with { type: 'json' };
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     deploymentId: `build-${pkg.version.replace(/\./g, "-")}`,

@@ -3,15 +3,13 @@ import fs from "fs";
 import mime from "mime-types";
 import { NextResponse } from "next/server";
 import path from "path";
-import { fileURLToPath } from "url";
 import sharp from "sharp";
 import crypto from "crypto";
 import Logger from "@/utilities/Logger";
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const prompts = {
-	enhancer: fs.readFileSync(path.join(__dirname, "enhancedPrompt.txt"), "utf8"),
-	designer: fs.readFileSync(path.join(__dirname, "designerPrompt.txt"), "utf8"),
+	enhancer: fs.readFileSync(path.join(process.cwd(), "src/app/api/generate/gemini/enhancedPrompt.txt"), "utf8"),
+	designer: fs.readFileSync(path.join(process.cwd(), "src/app/api/generate/gemini/designerPrompt.txt"), "utf8"),
 };
 
 const genai = new GoogleGenAI({
