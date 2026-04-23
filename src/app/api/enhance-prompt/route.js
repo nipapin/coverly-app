@@ -1,8 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import path from "path";
+import { fileURLToPath } from "url";
 import fs from "fs";
 import mime from "mime-types";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 const genai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -16,7 +19,7 @@ const enhanceUserPrompt = async (prompt, image) => {
     contents: contents,
     config: {
       responseModalities: ["TEXT"],
-      systemInstruction: fs.readFileSync(path.join(process.cwd(), "src/app/api/generate/gemini/enhancedPrompt.txt"), "utf8"),
+      systemInstruction: fs.readFileSync(path.join(__dirname, "../generate/gemini/enhancedPrompt.txt"), "utf8"),
     },
   });
   return response.text;

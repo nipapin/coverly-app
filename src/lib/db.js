@@ -1,3 +1,4 @@
+import "server-only";
 import fs from "fs";
 import path from "node:path";
 import pg from "pg";
@@ -125,10 +126,10 @@ export function getPool() {
 		if (!caFile) {
 			if (fs.statSync(resolved).isDirectory()) {
 				throw new Error(
-					`PG_CA_PATH points to a directory: "${path.resolve(resolved)}". Set it to the CA certificate file, e.g. ${path.join(resolved, "root.crt")} (tried: ${CA_FILE_NAMES.join(", ")}).`,
+					`PG_CA_PATH points to a directory: "${resolved}". Set it to the CA certificate file, e.g. ${path.join(resolved, "root.crt")} (tried: ${CA_FILE_NAMES.join(", ")}).`,
 				);
 			}
-			throw new Error(`PG_CA_PATH is not a regular file: "${path.resolve(resolved)}"`);
+			throw new Error(`PG_CA_PATH is not a regular file: "${resolved}"`);
 		}
 		// "unable to get local issuer certificate" usually means the server chain needs an
 		// intermediate in this file too: concatenate provider CA PEMs in one file.
