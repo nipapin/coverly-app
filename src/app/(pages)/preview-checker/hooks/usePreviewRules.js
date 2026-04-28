@@ -113,8 +113,12 @@ export function usePreviewRules(authToken, onUnauthorized) {
 
   useEffect(() => {
     if (authToken) {
+      // Async server fetch keyed by the token — the effect synchronizes the
+      // server-side rule set into local state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadRules(authToken);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authToken]);
 
   const openCreateDialog = () => {

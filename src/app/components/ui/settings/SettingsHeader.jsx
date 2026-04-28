@@ -56,6 +56,9 @@ export default function SettingsHeader() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // We intentionally bind once on mount — `handleSave` reads the latest
+    // `template` via closure each call because it goes through the store.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

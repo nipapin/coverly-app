@@ -1,11 +1,16 @@
+import { useTransform } from "@/app/hooks/useTransform";
 import { useLayoutStore } from "@/app/stores/LayoutStore";
+import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useEffect, useRef } from "react";
 import { Group } from "react-konva";
 import ChildrenView from "./ChildrenView";
 
-export default function GroupView({ item }) {
+export default function GroupView({ item, path }) {
   const groupRef = useRef(null);
   const { layout } = useLayoutStore();
+  const isSelected = useIsSelected(path);
+  const selectByEvent = useSelectionStore((s) => s.selectByEvent);
+  const { handleTransformEnd } = useTransform();
 
   useEffect(() => {
     if (!groupRef.current || !layout) {
@@ -21,9 +26,22 @@ export default function GroupView({ item }) {
   }, [item, layout]);
 
   return (
-    <Group ref={groupRef} name={item.name} key={item.name}>
+    <Group
+      ref={groupRef}
+      id={path}
+      name={item.name}
+      key={item.name}
+      nodeKind="group"
+      draggable={isSelected}
+      onClick={(e) => {
+        // Only react when the click hits the group background, not a child;
+        // child views own their own selection.
+        if (e.target === e.currentTarget) selectByEvent(path, e);
+      }}
+      onDragEnd={handleTransformEnd}
+    >
       {item.children.map((child, index) => {
-        return <ChildrenView key={index} item={child} parent={item} />;
+        return <ChildrenView key={index} item={child} parent={item} parentPath={path} index={index} />;
       })}
     </Group>
   );

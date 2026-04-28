@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-const { getPool } = await import("../src/lib/db.js");
+const { createMigrationPool } = await import("../src/lib/pgPoolConfig.js");
 
 async function main() {
 	const dir = join(root, "migrations");
@@ -19,7 +19,7 @@ async function main() {
 		console.log("No migrations in migrations/.");
 		return;
 	}
-	const pool = getPool();
+	const pool = createMigrationPool();
 	for (const f of files) {
 		const sql = await readFile(join(dir, f), "utf8");
 		console.log("Running", f, "…");

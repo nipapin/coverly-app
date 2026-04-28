@@ -1,6 +1,6 @@
 import { useDropletsStore } from "@/app/stores/DropletStore";
+import { useSelectionStore } from "@/app/stores/SelectionStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { useTransformerStore } from "@/app/stores/TransformerStore";
 import { Delete, ExpandLess, ExpandMore, Upload } from "@mui/icons-material";
 import { Avatar, Box, CardHeader, IconButton } from "@mui/material";
 import { useRef } from "react";
@@ -12,7 +12,7 @@ const LayerNames = {
 
 export default function ImageCardHeader({ src, name, count, onCollapse, collapsed }) {
 	const { template, setTemplate } = useTemplateStore();
-	const { transformer } = useTransformerStore();
+	const clearSelection = useSelectionStore((s) => s.clear);
 	const { setResetDroplets } = useDropletsStore();
 	const inputRef = useRef(null);
 
@@ -21,7 +21,6 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 			...template,
 			layers: template.layers.map((_layer) => {
 				if (_layer.name === name) {
-					const child = _layer.children.find((child) => child.src === src);
 					return {
 						..._layer,
 						children: _layer.children.map((child) => (child.type === "image" ? { ...child, src: "", variants: [] } : child))
@@ -30,7 +29,7 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 				return _layer;
 			})
 		};
-		transformer.nodes([]);
+		clearSelection();
 		setResetDroplets();
 		setTemplate(modifiedTemplate);
 	};

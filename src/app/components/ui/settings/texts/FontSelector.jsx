@@ -1,7 +1,6 @@
 import { useFonts } from "@/app/hooks/useFonts";
 import { useFontStore } from "@/app/stores/FontStore";
 import { Box, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
-import { useEffect } from "react";
 
 export default function FontSelector() {
 	const { fonts } = useFonts();
@@ -11,10 +10,10 @@ export default function FontSelector() {
 		setFont(e.target.value);
 	};
 
-	useEffect(() => {
-		if (!fonts) return;
-		setFont(fonts[0].fontFamily);
-	}, [fonts]);
+	// NB: the default font is now seeded by `useFontLoader()` (mounted by
+	// `MainCanvas`) so this component doesn't need its own bootstrap effect —
+	// by the time the user can open the Texts tab, FontStore is already in
+	// sync with `template.fonts[0]`.
 
 	if (!fonts) return null;
 

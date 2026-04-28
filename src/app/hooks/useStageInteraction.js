@@ -1,11 +1,11 @@
 import { useLayoutStore } from "@/app/stores/LayoutStore";
-import { useTransformerStore } from "../stores/TransformerStore";
+import { useSelectionStore } from "@/app/stores/SelectionStore";
 import { useDroplets } from "./useDroplets";
 
 export function useStageInteraction() {
-	const { transformer } = useTransformerStore();
 	const { layout, setLayout } = useLayoutStore();
 	const { createDroplets } = useDroplets();
+	const clearSelection = useSelectionStore((s) => s.clear);
 	const handleMouseScroll = (e) => {
 		e.evt.preventDefault();
 		if (!e.evt.ctrlKey) return;
@@ -63,10 +63,11 @@ export function useStageInteraction() {
 	};
 
 	const handleClick = (e) => {
-		if (!transformer) return;
-		const isTargetInTransformer = transformer.nodes().some((node) => node === e.target);
-		if (!isTargetInTransformer) {
-			transformer.nodes([]);
+		// Selection ownership lives in SelectionStore now: views dispatch their
+		// own select/toggle on click, so the stage only has to handle the
+		// "clicked on empty canvas" case → clear everything.
+		if (e.target === e.target.getStage()) {
+			clearSelection();
 		}
 	};
 

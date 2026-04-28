@@ -36,6 +36,10 @@ export function useDroplets() {
 		});
 
 		setDroplets(rects);
+		// `setDroplets` is a stable Zustand setter; intentionally omitted to
+		// avoid re-creating this callback (and the placeholder listeners that
+		// depend on it) on unrelated store renders.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [stage]);
 
 	useEffect(() => {

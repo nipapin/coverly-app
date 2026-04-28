@@ -37,7 +37,11 @@ export default function Logs() {
 	};
 
 	useEffect(() => {
+		// Async fetch driven by `filter` — `fetchLogs` reads `filter` via
+		// closure, so we deliberately keep the dep list narrow.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		fetchLogs();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [filter]);
 
 	const getLevelColor = (level) => {

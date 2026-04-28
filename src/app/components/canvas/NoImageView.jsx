@@ -50,7 +50,7 @@ export default function NoImageView({ item }) {
 			stage,
 			parent
 		};
-	}, [groupRef.current, layout]);
+	}, [layout]);
 
 	const positionElements = useCallback(() => {
 		if (!groupRef.current) return;
@@ -73,6 +73,9 @@ export default function NoImageView({ item }) {
 			positionElements();
 			createDroplets();
 		}, 150);
+		// One-shot bootstrap — we deliberately don't reposition or recreate
+		// droplets when the callbacks' identities change.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const componentName = useMemo(() => `${item.name}-placeholder`, [item.name]);

@@ -38,9 +38,25 @@ export default function Droplet({ droplet }) {
 		});
 
 		const data = await res.json();
-		const dropletLayer = stage.findOne((node) => node.name() === droplet.name);
-		const parent = dropletLayer.getParent();
-		const name = parent.name();
+
+		// Resolve the parent layer name. Preferred path: walk up the Konva
+		// tree from the placeholder Group. Fallback: derive from the droplet's
+		// own name (format `${parent}-placeholder` is set in `NoImageView`).
+		// We need the fallback because `useDroplets` caches the rect+name from
+		// mount time, so the record outlives the placeholder when:
+		//   - the user already loaded an image into that slot earlier;
+		//   - the scene renderer is on, where `NoImageView` is never mounted.
+		// Without it, a second drop on the same area crashes the app.
+		const dropletLayer = stage?.findOne((node) => node.name?.() === droplet.name);
+		let name = dropletLayer?.getParent?.()?.name?.();
+		if (!name && typeof droplet.name === "string") {
+			name = droplet.name.replace(/-placeholder$/, "");
+		}
+		if (!name) {
+			console.warn("[Droplet] could not resolve parent layer name for", droplet.name);
+			return;
+		}
+
 		const modifiedTemplate = {
 			...template,
 			layers: template.layers.map((layer) => {
@@ -84,7 +100,12 @@ export default function Droplet({ droplet }) {
 		loadFile(file);
 	};
 
+	// `resetDroplets` is a tick from the store that signals "the user picked a
+	// different image slot, throw away the local upload state". The effect is
+	// the right shape for "react to an external signal" — there's no derived
+	// data we could compute in render to replace it.
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setIsLoaded(false);
 		inputRef.current.value = null;
 	}, [resetDroplets]);

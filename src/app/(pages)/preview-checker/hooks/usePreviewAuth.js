@@ -1,18 +1,23 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+const readStoredToken = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem("previewCheckerToken");
+  } catch {
+    return null;
+  }
+};
 
 export function usePreviewAuth() {
-  const [authToken, setAuthToken] = useState(null);
+  // Lazy init pulls the persisted token in synchronously instead of bouncing
+  // through `useEffect` + `setAuthToken`, which the React 19 hooks linter
+  // (rightly) flags as a wasted commit.
+  const [authToken, setAuthToken] = useState(readStoredToken);
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
-
-  useEffect(() => {
-    const storedToken = typeof window !== "undefined" ? window.localStorage.getItem("previewCheckerToken") : null;
-    if (storedToken) {
-      setAuthToken(storedToken);
-    }
-  }, []);
 
   const logout = () => {
     setAuthToken(null);

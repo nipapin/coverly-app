@@ -1,0 +1,69 @@
+{
+  "profile": "balanced",
+  "inputs": {
+    "sourceAudioUrl": "https://ihlhivqvotguuqycfcvj.supabase.co/storage/v1/object/public/public-text-to-speech/scratch-testing/earth-history-19mins.mp3",
+    "benchmarkSeconds": 360,
+    "targetLanguages": [
+      "de",
+      "it",
+      "es"
+    ]
+  },
+  "models": {
+    "asr": "fal-ai/whisper",
+    "translation": "fal-ai/any-llm",
+    "voiceClone": "fal-ai/qwen-3-tts/clone-voice/0.6b",
+    "tts": "fal-ai/qwen-3-tts/text-to-speech/0.6b",
+    "emotion": "xai/tts/v1"
+  },
+  "translationsPreview": {
+    "de": "Hallo, Sie sind auf einem Felsen, der im Weltall schwebt. Ziemlich cool, oder? Ein Teil davon ist Wasser. Scheiß drauf, eigentlich ist der meiste Teil davon Wasser. Ich komme nicht mal von hier nach dort, ohne mir ein Boot zu kaufen. Es ist traurig. Ich bin traurig. Ich vermisse dich. Wie ist das pa",
+    "it": "Ciao, sei su una roccia, fluttuante nello spazio. Abbastanza figo, eh? Una parte è acqua. Al diavolo, in realtà la maggior parte è acqua. Non posso nemmeno andare da qui a lì senza comprare una barca. È triste. Sono triste. Mi manchi. Come è successo? Tanto tempo fa, in realtà mai, e anche ora, null",
+    "es": "Hola, estás en una roca, flotando en el espacio. Bastante genial, ¿verdad? Una parte es agua. Al carajo, en realidad la mayor parte es agua. Ni siquiera puedo ir de aquí para allá sin comprar un barco. Es triste. Estoy triste. Te extraño. ¿Cómo pasó esto? Hace mucho tiempo, en realidad nunca, y tamb"
+  },
+  "summary": {
+    "asr": {
+      "transcriptChars": 7003,
+      "segmentCount": 191,
+      "uniqueSpeakers": [
+        "SPEAKER_00",
+        "SPEAKER_01"
+      ],
+      "speakerTurns": 3
+    },
+    "translation": {
+      "totalTranslatedChars": 22684,
+      "charRatio": 3.24,
+      "byLanguageChars": {
+        "de": 7988,
+        "it": 7303,
+        "es": 7393
+      }
+    },
+    "voiceClone": {
+      "referenceDurationSec": 15
+    },
+    "tts": {
+      "qwenChars": 900,
+      "xaiChars": 77,
+      "qwenDurationSec": 15.9,
+      "xaiAudioUrl": "https://v3b.fal.media/files/b/0a9785d3/xIRuI-3wcFFK9JYVLQe_l_xai_tts_output.mp3"
+    },
+    "latency": {
+      "asrMs": 25330.3,
+      "translationMs": 27831.07,
+      "voiceCloneMs": 92553.46,
+      "qwenTtsMs": 36362.17,
+      "xaiTtsMs": 3075.24
+    },
+    "cost": {
+      "translationCostUsd": 0,
+      "voiceCloneCostUsd": 0,
+      "qwenTtsCostUsd": 0.06,
+      "xaiTtsCostUsd": 0,
+      "lipsyncCostUsd": 0,
+      "totalEstimatedUsd": 0.07
+    }
+  },
+  "completedAt": "2026-04-24T09:39:17.531Z"
+}

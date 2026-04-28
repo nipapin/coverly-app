@@ -8,6 +8,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "db:migrate": "node --env-file=.env scripts/run-migration.mjs",
+    "benchmark:fal:balanced": "node --env-file=.env scripts/fal/run-balanced-benchmark.mjs",
+    "test:scene": "node --test scripts/scene/test-*.mjs",
     "lint": "eslint",
     "deploy": "git pull && sudo rm -rf .next && npm run build && pm2 reload all"
   },
@@ -44,7 +46,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "24.3.0",
-    "eslint": "^10.0.0",
-    "eslint-config-next": "^0.2.4"
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.4"
   }
 }

@@ -2,15 +2,24 @@ import { useStageStore } from "@/app/stores/StageStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
 import { SwapHoriz } from "@mui/icons-material";
 import { Box, Button } from "@mui/material";
-import { useEffect, useState } from "react";
-import ModelSelector from "../ModelSelector";
+import { useMemo, useState } from "react";
 import ImageCard from "./ImageCard";
+
+// `ModelSelector` is intentionally hidden while only one generation backend
+// (Gemini) is wired up — a single-option dropdown just confuses users.
+// Re-import and drop back into the JSX below once a second model ships.
 
 export default function ImagesTab() {
   const { stage } = useStageStore();
   const { template, setTemplate } = useTemplateStore();
   const [swapImages, setSwapImages] = useState(false);
-  const [layers, setLayers] = useState([]);
+
+  const layers = useMemo(() => {
+    if (!template?.layers) return [];
+    return template.layers
+      .filter((layer) => layer.children?.some((child) => child.type === "image"))
+      .flatMap((layer) => layer.children);
+  }, [template]);
 
   const handleSwapImages = () => {
     setSwapImages(!swapImages);
@@ -23,13 +32,6 @@ export default function ImagesTab() {
     setTemplate({ ...template, layers: newLayers });
     stage.batchDraw();
   };
-
-  useEffect(() => {
-    const imageLayers = template.layers
-      .filter((layer) => layer.children?.some((child) => child.type === "image"))
-      .flatMap((layer) => layer.children);
-    setLayers(imageLayers);
-  }, [template]);
 
   return (
     <Box
@@ -44,7 +46,6 @@ export default function ImagesTab() {
         "&::-webkit-scrollbar-thumb": { background: "white", borderRadius: "0.5rem", border: "4px solid #13315C" },
       }}
     >
-      <ModelSelector />
       {layers.length > 1 && (
         <Button variant="outlined" color="primary" startIcon={<SwapHoriz />} onClick={handleSwapImages}>
           Swap Images

@@ -27,9 +27,14 @@ export async function getJobById(id) {
 		`SELECT id, job_id AS "jobId", title, original_filename AS "originalFilename",
         video_s3_key AS "videoS3Key",
         extracted_audio_s3_key AS "extractedAudioS3Key",
+        vocals_s3_key AS "vocalsS3Key",
+        accompaniment_s3_key AS "accompanimentS3Key",
         transcript, translations, transcript_segments AS "transcriptSegments",
         audio_s3_keys AS "audioS3Keys",
         muxed_video_s3_keys AS "muxedVideoS3Keys", status,
+        detected_speakers AS "detectedSpeakers",
+        speaker_embeddings AS "speakerEmbeddings",
+        speaker_voices AS "speakerVoices",
         last_error_code AS "lastErrorCode", last_error_message AS "lastErrorMessage",
         created_at AS "createdAt", updated_at AS "updatedAt"
      FROM video_translations WHERE id = $1::uuid`,
@@ -68,6 +73,9 @@ export async function setUploadComplete(id, { videoS3Key, originalFilename, stat
          original_filename = COALESCE($3, original_filename),
          status = $4,
          extracted_audio_s3_key = NULL,
+         vocals_s3_key = NULL,
+         accompaniment_s3_key = NULL,
+         speaker_embeddings = NULL,
          last_error_code = NULL,
          last_error_message = NULL,
          updated_at = now()
@@ -84,6 +92,9 @@ export async function setAudioExtracted(id, { extractedAudioS3Key, status = "aud
 	await pool.query(
 		`UPDATE video_translations
      SET extracted_audio_s3_key = $2,
+         vocals_s3_key = NULL,
+         accompaniment_s3_key = NULL,
+         speaker_embeddings = NULL,
          status = $3,
          last_error_code = NULL,
          last_error_message = NULL,
@@ -93,7 +104,19 @@ export async function setAudioExtracted(id, { extractedAudioS3Key, status = "aud
 	);
 }
 
-export async function setPrepareResult(id, { transcript, translations, transcriptSegments = null, status = "transcribed" }) {
+export async function setPrepareResult(
+	id,
+	{
+		transcript,
+		translations,
+		transcriptSegments = null,
+		detectedSpeakers = null,
+		speakerEmbeddings = null,
+		vocalsS3Key = null,
+		accompanimentS3Key = null,
+		status = "transcribed",
+	},
+) {
 	const pool = getPool();
 	await pool.query(
 		`UPDATE video_translations
@@ -101,6 +124,10 @@ export async function setPrepareResult(id, { transcript, translations, transcrip
          translations = $3::jsonb,
          status = $4,
          transcript_segments = $5::jsonb,
+         detected_speakers = $6::jsonb,
+         speaker_embeddings = $7::jsonb,
+         vocals_s3_key = $8,
+         accompaniment_s3_key = $9,
          last_error_code = NULL,
          last_error_message = NULL,
          updated_at = now()
@@ -111,7 +138,24 @@ export async function setPrepareResult(id, { transcript, translations, transcrip
 			JSON.stringify(translations),
 			status,
 			transcriptSegments == null ? null : JSON.stringify(transcriptSegments),
+			detectedSpeakers == null ? null : JSON.stringify(detectedSpeakers),
+			speakerEmbeddings == null ? null : JSON.stringify(speakerEmbeddings),
+			vocalsS3Key,
+			accompanimentS3Key,
 		],
+	);
+}
+
+/**
+ * Persist the speaker → voice mapping chosen by the user.
+ * @param {string} id
+ * @param {Record<string, string>} speakerVoices
+ */
+export async function setSpeakerVoices(id, speakerVoices) {
+	const pool = getPool();
+	await pool.query(
+		`UPDATE video_translations SET speaker_voices = $2::jsonb, updated_at = now() WHERE id = $1::uuid`,
+		[id, JSON.stringify(speakerVoices)],
 	);
 }
 
@@ -139,7 +183,10 @@ export async function setAudioS3KeyForLang(id, lang, objectKey) {
 		const keys = typeof rawKeys === "object" && rawKeys !== null ? { ...rawKeys } : {};
 		keys[lang] = objectKey;
 		const translations = rows[0].translations;
-		const langs = translations && typeof translations === "object" ? Object.keys(translations) : ["en", "de", "it", "es"];
+		const langs =
+			translations && typeof translations === "object"
+				? Object.keys(translations)
+				: ["en", "de", "it", "es"];
 		const allDone = langs.length > 0 && langs.every((k) => keys[k]);
 		const status = allDone ? "complete" : "transcribed";
 		const rawMuxed = rows[0].muxed_video_s3_keys;

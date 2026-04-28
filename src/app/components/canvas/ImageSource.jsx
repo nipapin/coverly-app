@@ -1,29 +1,29 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { useTransformerStore } from "@/app/stores/TransformerStore";
 import { useEffect, useRef } from "react";
 import { Image } from "react-konva";
 import useImage from "use-image";
 
-export default function ImageSource({ variant, visible, layerName }) {
+/**
+ * One Konva.Image per image variant. Only the active variant is visible and
+ * listens to events; that single visible node carries the scene `id` (which
+ * matches the SelectionStore id), so the global Transformer can find it via
+ * `stage.findOne('#id')` without us having to maintain refs here.
+ *
+ * Selection is fully declarative now: clicking dispatches to the store, and
+ * `draggable` follows from `useIsSelected`. There is no manual transformer
+ * manipulation or `setDraggable` — the previous imperative code caused the
+ * "self-moving" bug where switching variants left the transformer attached to
+ * a hidden node.
+ */
+export default function ImageSource({ variant, visible, layerName, path }) {
   const { template } = useTemplateStore();
-  const { transformer } = useTransformerStore();
   const { handleTransformEnd } = useTransform();
+  const selectByEvent = useSelectionStore((s) => s.selectByEvent);
+  const isSelected = useIsSelected(path);
   const [imageSource] = useImage(variant.src || "", "anonymous");
   const imageRef = useRef(null);
-
-  const handleClick = (e) => {
-    if (!transformer) return;
-    if (!imageRef.current) return;
-    const nodes = transformer.nodes();
-    if (nodes.includes(imageRef.current)) {
-      transformer.nodes(nodes.filter((node) => node !== imageRef.current));
-      imageRef.current.setDraggable(false);
-      return;
-    }
-    imageRef.current.setDraggable(true);
-    transformer.nodes([imageRef.current]);
-  };
 
   useEffect(() => {
     const templateLayer = template.layers
@@ -60,7 +60,26 @@ export default function ImageSource({ variant, visible, layerName }) {
       img.setAttrs({ x, y, width, height });
       img.getStage().batchDraw();
     }
+    // We intentionally re-run only when the variant becomes visible or its
+    // bitmap loads. Including `layerName`, `template.layers` or `variant.src`
+    // would re-fire this effect on every unrelated template mutation and
+    // overwrite the cached transform; the lookups inside the effect already
+    // pick up the latest values via closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, imageSource]);
 
-  return <Image ref={imageRef} image={imageSource} onClick={handleClick} onDragEnd={handleTransformEnd} visible={visible} />;
+  return (
+    // eslint-disable-next-line jsx-a11y/alt-text
+    <Image
+      ref={imageRef}
+      image={imageSource}
+      visible={visible}
+      listening={visible}
+      draggable={visible && isSelected}
+      {...(visible ? { id: path } : {})}
+      onClick={(e) => selectByEvent(path, e)}
+      onTap={(e) => selectByEvent(path, e)}
+      onDragEnd={handleTransformEnd}
+    />
+  );
 }

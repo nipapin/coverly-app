@@ -61,6 +61,9 @@ export default function VideoTranslateLibrary() {
 	}, []);
 
 	useEffect(() => {
+		// Initial server fetch — `load` writes into local state internally,
+		// which is the right shape for a one-shot data load.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		void load();
 	}, [load]);
 

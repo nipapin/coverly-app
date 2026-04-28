@@ -1,16 +1,11 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+// `eslint-config-next` 16 ships a flat config (a plain array of config
+// objects) and is loaded directly here. The previous setup wrapped it in
+// `@eslint/eslintrc`'s `FlatCompat`, which `eslint-config-next` no longer
+// supports — it crashes on circular references inside the plugin export.
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals"),
+  ...nextCoreWebVitals,
   {
     ignores: [
       "node_modules/**",

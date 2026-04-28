@@ -43,10 +43,14 @@ export async function POST(req) {
 		const segments = row.transcriptSegments;
 		const useSegments = Array.isArray(segments) && segments.length > 0;
 
+		/** @type {Record<string, string>} */
+		const speakerEmbeddings =
+			row?.speakerEmbeddings && typeof row.speakerEmbeddings === "object" ? row.speakerEmbeddings : {};
+
 		const { client, bucket } = getVideoTranslateS3();
 		const mp3 = useSegments
-			? await synthesizeSegmentsToTimelineMp3Buffer(segments, lang, 0)
-			: await synthesizeTextToMp3Buffer(text, lang);
+			? await synthesizeSegmentsToTimelineMp3Buffer(segments, lang, 0, {}, speakerEmbeddings)
+			: await synthesizeTextToMp3Buffer(text, lang, null, null);
 		const objectKey = `video-translate/outputs/${jobId}/${lang}.mp3`;
 		await uploadFileToS3(client, bucket, objectKey, mp3, "audio/mpeg");
 		await setAudioS3KeyForLang(translationId, lang, objectKey);

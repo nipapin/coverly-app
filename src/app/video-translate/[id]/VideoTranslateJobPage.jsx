@@ -8,6 +8,7 @@ import {
 	Button,
 	IconButton,
 	Paper,
+	LinearProgress,
 	Stack,
 	Tooltip,
 	Typography,
@@ -23,7 +24,10 @@ import {
 	Link2,
 } from "lucide-react";
 import { fetchWithRetry, messageIfNetworkFailure } from "@/lib/fetchRetry";
-import { LANGS, LANG_LABELS } from "../constants";
+import {
+	LANGS,
+	LANG_LABELS,
+} from "../constants";
 
 function formatDuration(sec) {
 	if (sec == null || !Number.isFinite(sec) || sec < 0) return "—";
@@ -63,6 +67,35 @@ function readErrorMessage(data, fallback) {
 		return data.error;
 	}
 	return fallback;
+}
+
+function uploadWithProgress(url, formData, signal, onProgress) {
+	return new Promise((resolve, reject) => {
+		const xhr = new XMLHttpRequest();
+		xhr.open("POST", url);
+		xhr.responseType = "json";
+		const abort = () => xhr.abort();
+		if (signal) {
+			if (signal.aborted) return reject(new DOMException("The operation was aborted.", "AbortError"));
+			signal.addEventListener("abort", abort, { once: true });
+		}
+		xhr.upload.onprogress = (event) => {
+			if (!event.lengthComputable) return;
+			const pct = Math.max(0, Math.min(100, Math.round((event.loaded / event.total) * 100)));
+			onProgress?.(pct);
+		};
+		xhr.onerror = () => reject(new Error("Upload failed"));
+		xhr.onabort = () => reject(new DOMException("The operation was aborted.", "AbortError"));
+		xhr.onload = () => {
+			if (signal) signal.removeEventListener("abort", abort);
+			resolve({
+				ok: xhr.status >= 200 && xhr.status < 300,
+				status: xhr.status,
+				json: async () => xhr.response || {},
+			});
+		};
+		xhr.send(formData);
+	});
 }
 
 async function requestMuxedExport(translationId, lang, signal) {
@@ -138,7 +171,7 @@ function DubbedVideoPreview({ muxedVideoUrl, videoSrc, audioSrc }) {
 					sx={{ width: "100%", display: "block" }}
 				/>
 				<Typography variant='caption' color='text.secondary' display='block' sx={{ mt: 0.75 }}>
-					Ready to download: original soundtrack is quieter; translation follows Whisper segment timing.{" "}
+					Ready to download translated video.{" "}
 					<Box
 						component='a'
 						href={muxedVideoUrl}
@@ -178,7 +211,7 @@ function DubbedVideoPreview({ muxedVideoUrl, videoSrc, audioSrc }) {
 			/>
 			<audio ref={audioRef} src={audioSrc} preload='auto' style={{ display: "none" }} />
 			<Typography variant='caption' color='text.secondary' display='block' sx={{ mt: 0.75 }}>
-				Preview only (translation muted on picture). Final MP4 is built after voiceover + export.{" "}
+				Preview mode: translated video is still processing.{" "}
 				<Box
 					component='a'
 					href={audioSrc}
@@ -212,10 +245,11 @@ export default function VideoTranslateJobPage() {
 	const [dragActive, setDragActive] = useState(false);
 	const [dropError, setDropError] = useState(null);
 	const [linkCopied, setLinkCopied] = useState(false);
-	/** null | 'upload' | 'extract' — video in storage, then sound extracted, then we show Languages (Fal runs after) */
+	/** null | 'upload' | 'extract' */
 	const [preFalStep, setPreFalStep] = useState(null);
 	const [pipelineError, setPipelineError] = useState(null);
-	const [serverErrorRetrying, setServerErrorRetrying] = useState(false);
+	const [synthesizing, setSynthesizing] = useState(false);
+	const [uploadProgressPct, setUploadProgressPct] = useState(0);
 
 	const refreshJob = useCallback(async () => {
 		if (!translationId) return null;
@@ -263,7 +297,7 @@ export default function VideoTranslateJobPage() {
 						errorMessage: null,
 						audioUrl: null,
 						muxedVideoUrl: null,
-						stepLabel: "Ready to transcribe",
+						stepLabel: "Waiting to continue",
 						failurePhase: null,
 					})),
 				);
@@ -299,32 +333,12 @@ export default function VideoTranslateJobPage() {
 		[translationId],
 	);
 
-	const retryAfterServerError = useCallback(async () => {
-		if (!translationId) return null;
-		setServerErrorRetrying(true);
-		try {
-			const res = await fetchWithRetry(`/api/video-translate/jobs/${translationId}`, {
-				method: "POST",
-			});
-			const data = await res.json();
-			if (!res.ok) {
-				throw new Error(readErrorMessage(data, "Could not reset job"));
-			}
-			const job = await refreshJob();
-			if (job) hydrateFromJob(job);
-			return job;
-		} catch (e) {
-			setPipelineError(
-				messageIfNetworkFailure(e, e instanceof Error ? e.message : "Could not reset job"),
-			);
-			return null;
-		} finally {
-			setServerErrorRetrying(false);
-		}
-	}, [translationId, refreshJob, hydrateFromJob]);
-
 	useEffect(() => {
 		if (!translationId) return;
+		// Reset the loader UI before the async refresh starts; the effect is
+		// the right boundary because a translationId change is exactly the
+		// "external system changed, re-sync" trigger this rule allows.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setLoadError(null);
 		setLoadDone(false);
 		(async () => {
@@ -349,70 +363,85 @@ export default function VideoTranslateJobPage() {
 		setLocalFile(null);
 	}, [localVideoUrl]);
 
-	const resynthOne = useCallback(
-		async (batchId, lang) => {
-			const ctx = batchContextRef.current[batchId];
-			const text = ctx?.translations?.[lang];
-			if (!text) return;
+	const runSynthesis = useCallback(
+		async (batchId) => {
+			const ctx = batchContextRef.current[batchId] || {};
+			const translations = ctx.translations || serverJob?.translations;
+			if (!translations) return;
 
-			const patch = (updates) => {
+			setSynthesizing(true);
+			const markCard = (lang, patch) => {
 				setCards((prev) =>
-					prev.map((c) => (c.id === `${batchId}-${lang}` ? { ...c, ...updates } : c)),
+					prev.map((c) => (c.id === `${batchId}-${lang}` ? { ...c, ...patch } : c)),
 				);
 			};
 
-			patch({
-				status: "synthesizing",
-				stepLabel: "Generating voiceover…",
-				errorMessage: null,
-				failurePhase: null,
-				audioUrl: null,
-				muxedVideoUrl: null,
+			LANGS.forEach((lang) => {
+				markCard(lang, {
+					status: "synthesizing",
+					stepLabel: "Step 6 of 8: Creating translated speech",
+					errorMessage: null,
+					failurePhase: null,
+					audioUrl: null,
+					muxedVideoUrl: null,
+				});
 			});
 
-			const ac = new AbortController();
-			if (!ctx.synthAborts) ctx.synthAborts = {};
-			ctx.synthAborts[lang] = ac;
+			// `ctx` is the per-batch slot inside `batchContextRef.current` —
+			// refs are mutable by design, so writing to it doesn't break any
+			// hook contract; the lint can't see through the indirection.
+			// eslint-disable-next-line react-hooks/immutability
+			ctx.synthAborts = {};
+			await Promise.all(
+				LANGS.map(async (lang) => {
+					const ac = new AbortController();
+					ctx.synthAborts[lang] = ac;
+					try {
+						const res = await fetchWithRetry("/api/video-translate/synthesize", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({
+								translationId: batchId,
+								lang,
+								text: translations[lang],
+							}),
+							signal: ac.signal,
+						});
+						const data = await res.json();
+						if (!res.ok) {
+							throw new Error(readErrorMessage(data, "Could not create translated audio"));
+						}
 
-			try {
-				const res = await fetchWithRetry("/api/video-translate/synthesize", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ translationId: batchId, lang, text }),
-					signal: ac.signal,
-				});
-				const data = await res.json();
-				if (!res.ok) {
-					throw new Error(readErrorMessage(data, "Voice generation failed"));
-				}
-				patch({
-					status: "done",
-					stepLabel: "Ready",
-					audioUrl: data.audioUrl,
-				});
-				let muxedUrl = null;
-				try {
-					muxedUrl = await requestMuxedExport(batchId, lang, ac.signal);
-				} catch {
-					/* export can be retried from the card */
-				}
-				if (muxedUrl) {
-					patch({ muxedVideoUrl: muxedUrl });
-				}
-				void refreshJob();
-			} catch (e) {
-				if (e?.name === "AbortError") {
-					patch({ status: "cancelled", stepLabel: "Cancelled" });
-				} else {
-					patch({
-						status: "error",
-						errorMessage: messageIfNetworkFailure(e, "Voice generation failed"),
-						failurePhase: "synthesize",
-					});
-				}
-			}
+						markCard(lang, {
+							status: "exporting",
+							stepLabel: "Step 7 of 8: Combining with video",
+							audioUrl: data.audioUrl,
+						});
+
+						const muxedUrl = await requestMuxedExport(batchId, lang, ac.signal);
+						markCard(lang, {
+							status: "done",
+							stepLabel: "Step 8 of 8: Ready",
+							audioUrl: data.audioUrl,
+							muxedVideoUrl: muxedUrl,
+						});
+					} catch (e) {
+						if (e?.name === "AbortError") {
+							markCard(lang, { status: "cancelled", stepLabel: "Cancelled" });
+						} else {
+							markCard(lang, {
+								status: "error",
+								errorMessage: messageIfNetworkFailure(e, "Could not create translated video"),
+								failurePhase: "synthesize",
+							});
+						}
+					}
+				}),
+			);
+			setSynthesizing(false);
+			void refreshJob();
 		},
-		[refreshJob],
+		[serverJob, refreshJob],
 	);
 
 	const runPipeline = useCallback(
@@ -423,10 +452,6 @@ export default function VideoTranslateJobPage() {
 				setCards((prev) =>
 					prev.map((c) => (c.id === `${batchId}-${lang}` ? { ...c, ...patch } : c)),
 				);
-			};
-
-			const markAll = (patch) => {
-				LANGS.forEach((lang) => markCard(lang, patch));
 			};
 
 			const buildLanguageCards = (fileName) =>
@@ -441,7 +466,7 @@ export default function VideoTranslateJobPage() {
 					errorMessage: null,
 					audioUrl: null,
 					muxedVideoUrl: null,
-					stepLabel: "Transcribing & translating (Fal.ai)…",
+					stepLabel: "Step 3 of 8: Analyzing audio",
 					failurePhase: null,
 				}));
 
@@ -450,19 +475,21 @@ export default function VideoTranslateJobPage() {
 
 				if (!skipUpload) {
 					setPreFalStep("upload");
+					setUploadProgressPct(0);
 					setCards([]);
+					// Storing the abort controller on the per-batch ref slot —
+					// see the note on `ctx.synthAborts` above for why mutating
+					// it is safe.
+					// eslint-disable-next-line react-hooks/immutability
 					ctx.uploadAbort = new AbortController();
 					const fd = new FormData();
 					fd.set("file", ctx.file);
 					fd.set("translationId", batchId);
-					const res = await fetchWithRetry(
+					const res = await uploadWithProgress(
 						"/api/video-translate/upload",
-						{
-							method: "POST",
-							body: fd,
-							signal: ctx.uploadAbort.signal,
-						},
-						{ retries: 2, baseDelayMs: 800 },
+						fd,
+						ctx.uploadAbort.signal,
+						(pct) => setUploadProgressPct(pct),
 					);
 					const data = await res.json();
 					if (!res.ok) {
@@ -470,6 +497,7 @@ export default function VideoTranslateJobPage() {
 						err.phase = "upload";
 						throw err;
 					}
+					setUploadProgressPct(100);
 					ctx.s3Key = data.key;
 					void refreshJob();
 				}
@@ -522,59 +550,13 @@ export default function VideoTranslateJobPage() {
 				ctx.transcript = prepData.transcript;
 				ctx.translations = prepData.translations;
 
-				markAll({
-					status: "synthesizing",
-					stepLabel: "Generating voiceover…",
+				LANGS.forEach((lang) => {
+					markCard(lang, {
+						status: "synthesizing",
+						stepLabel: "Step 6 of 8: Creating translated speech",
+					});
 				});
-
-				ctx.synthAborts = {};
-				await Promise.all(
-					LANGS.map(async (lang) => {
-						const ac = new AbortController();
-						ctx.synthAborts[lang] = ac;
-						try {
-							const res = await fetchWithRetry("/api/video-translate/synthesize", {
-								method: "POST",
-								headers: { "Content-Type": "application/json" },
-								body: JSON.stringify({
-									translationId: batchId,
-									lang,
-									text: ctx.translations[lang],
-								}),
-								signal: ac.signal,
-							});
-							const data = await res.json();
-							if (!res.ok) {
-								throw new Error(readErrorMessage(data, "Voice generation failed"));
-							}
-							let muxedUrl = null;
-							try {
-								muxedUrl = await requestMuxedExport(batchId, lang, ac.signal);
-							} catch {
-								/* ignore */
-							}
-							markCard(lang, {
-								status: "done",
-								stepLabel: "Ready",
-								audioUrl: data.audioUrl,
-								muxedVideoUrl: muxedUrl,
-								errorMessage: null,
-								failurePhase: null,
-							});
-						} catch (e) {
-							if (e?.name === "AbortError") {
-								markCard(lang, { status: "cancelled", stepLabel: "Cancelled" });
-							} else {
-								markCard(lang, {
-									status: "error",
-									errorMessage: messageIfNetworkFailure(e, "Voice generation failed"),
-									failurePhase: "synthesize",
-								});
-							}
-						}
-					}),
-				);
-				void refreshJob();
+				await runSynthesis(batchId);
 			} catch (e) {
 				setPreFalStep(null);
 				void refreshJob();
@@ -608,8 +590,34 @@ export default function VideoTranslateJobPage() {
 				);
 			}
 		},
-		[refreshJob],
+		[refreshJob, runSynthesis],
 	);
+
+	useEffect(() => {
+		if (!translationId || !serverJob || preFalStep || synthesizing) return;
+		// Server-state driven resume: when we receive a job in a partially-
+		// completed state we restart the pipeline from the right step. The
+		// long-running async path internally calls setState — that's the
+		// whole point of the effect, so the rule is suppressed per branch.
+		if (serverJob.status === "uploaded") {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
+			void runPipeline(translationId, { skipUpload: true, skipExtract: false });
+		} else if (serverJob.status === "audio_ready" && !serverJob.transcript) {
+			void runPipeline(translationId, { skipUpload: true, skipExtract: true });
+		} else if (serverJob.status === "transcribed") {
+			const hasAnyAudio =
+				serverJob.audioUrls && typeof serverJob.audioUrls === "object"
+					? Object.keys(serverJob.audioUrls).length > 0
+					: false;
+			if (!hasAnyAudio) {
+				batchContextRef.current[translationId] = {
+					...(batchContextRef.current[translationId] || {}),
+					translations: serverJob.translations || {},
+				};
+				void runSynthesis(translationId);
+			}
+		}
+	}, [translationId, serverJob, preFalStep, synthesizing, runPipeline, runSynthesis]);
 
 	const cancelBatch = useCallback((batchId) => {
 		const ctx = batchContextRef.current[batchId];
@@ -619,6 +627,7 @@ export default function VideoTranslateJobPage() {
 		safeAbort(ctx.prepareAbort);
 		Object.values(ctx.synthAborts || {}).forEach(safeAbort);
 		setPreFalStep(null);
+		setSynthesizing(false);
 		setCards((prev) =>
 			prev.map((c) =>
 				c.batchId === batchId && ["preparing", "synthesizing"].includes(c.status)
@@ -631,10 +640,8 @@ export default function VideoTranslateJobPage() {
 	const retryCard = useCallback(
 		(card) => {
 			if (card.status !== "error") return;
-			const { batchId, langCode, failurePhase } = card;
-			if (failurePhase === "synthesize") {
-				void resynthOne(batchId, langCode);
-			} else if (failurePhase === "prepare") {
+			const { batchId, failurePhase } = card;
+			if (failurePhase === "prepare") {
 				void runPipeline(batchId, { skipUpload: true, skipExtract: true });
 			} else if (failurePhase === "extract") {
 				void runPipeline(batchId, { skipUpload: true, skipExtract: false });
@@ -642,7 +649,7 @@ export default function VideoTranslateJobPage() {
 				void runPipeline(batchId);
 			}
 		},
-		[resynthOne, runPipeline],
+		[runPipeline],
 	);
 
 	const startBatch = useCallback(
@@ -668,80 +675,6 @@ export default function VideoTranslateJobPage() {
 			void runPipeline(translationId, { skipUpload: false, skipExtract: false });
 		},
 		[translationId, runPipeline],
-	);
-
-	const continueFromUploaded = useCallback(() => {
-		if (!translationId) return;
-		const c = batchContextRef.current[translationId] || {};
-		batchContextRef.current[translationId] = {
-			...c,
-			fileName: serverJob?.originalFilename || c.fileName || "video",
-		};
-		setPipelineError(null);
-		void runPipeline(translationId, { skipUpload: true, skipExtract: false });
-	}, [translationId, runPipeline, serverJob?.originalFilename]);
-
-	const continueFromAudioReady = useCallback(() => {
-		if (!translationId) return;
-		const c = batchContextRef.current[translationId] || {};
-		batchContextRef.current[translationId] = {
-			...c,
-			fileName: serverJob?.originalFilename || c.fileName || "video",
-		};
-		setPipelineError(null);
-		void runPipeline(translationId, { skipUpload: true, skipExtract: true });
-	}, [translationId, runPipeline, serverJob?.originalFilename]);
-
-	const runMissingVoiceovers = useCallback(() => {
-		if (!translationId) return;
-		const ctx = batchContextRef.current[translationId] || {};
-		const t = ctx.translations || serverJob?.translations;
-		if (!t) return;
-		batchContextRef.current[translationId] = { ...ctx, translations: t };
-		setCards((prev) =>
-			prev.map((c) => {
-				if (c.status === "done" && c.audioUrl) return c;
-				if (c.langCode && t[c.langCode] && !serverJob?.audioUrls?.[c.langCode]) {
-					return {
-						...c,
-						status: "synthesizing",
-						stepLabel: "Generating voiceover…",
-						errorMessage: null,
-						muxedVideoUrl: null,
-					};
-				}
-				return c;
-			}),
-		);
-		void (async () => {
-			const j = await refreshJob();
-			for (const lang of LANGS) {
-				if (j?.audioUrls?.[lang]) continue;
-				if (!t[lang]) continue;
-				await resynthOne(translationId, lang);
-			}
-			void refreshJob();
-		})().catch(() => { });
-	}, [translationId, serverJob, resynthOne, refreshJob]);
-
-	const exportMuxForLang = useCallback(
-		async (lang) => {
-			if (!translationId) return;
-			try {
-				const url = await requestMuxedExport(translationId, lang);
-				if (url) {
-					setCards((prev) =>
-						prev.map((c) =>
-							c.langCode === lang && c.batchId === translationId ? { ...c, muxedVideoUrl: url } : c,
-						),
-					);
-				}
-				void refreshJob();
-			} catch (e) {
-				setPipelineError(messageIfNetworkFailure(e, "Could not build downloadable video"));
-			}
-		},
-		[translationId, refreshJob],
 	);
 
 	const handleFile = useCallback(
@@ -861,17 +794,20 @@ export default function VideoTranslateJobPage() {
 	const status = serverJob?.status;
 	const showDropzone = status === "pending_upload" && !localFile && !localVideoUrl;
 	const serverVideo = serverJob?.videoUrl;
-	const canResumeExtract = status === "uploaded" && !preFalStep;
-	const canStartFal =
-		status === "audio_ready" &&
-		!serverJob?.transcript &&
-		!preFalStep &&
-		!cards.some((c) => ["preparing", "synthesizing"].includes(c.status));
-	const canRunMissing =
-		status === "transcribed" &&
-		serverJob?.translations &&
-		!preFalStep &&
-		!cards.some((c) => ["preparing", "synthesizing"].includes(c.status));
+	let currentStepText = null;
+	if (preFalStep === "upload") {
+		currentStepText = "Step 1 of 8: Uploading video";
+	} else if (preFalStep === "extract") {
+		currentStepText = "Step 2 of 8: Extracting main audio";
+	} else if (cards.some((c) => c.status === "preparing")) {
+		currentStepText = "Step 3 of 8: Separating and analyzing speech";
+	} else if (cards.some((c) => c.status === "synthesizing")) {
+		currentStepText = "Step 6 of 8: Creating translated speech";
+	} else if (cards.some((c) => c.status === "exporting")) {
+		currentStepText = "Step 7 of 8: Combining translated audio with video";
+	} else if (status === "complete") {
+		currentStepText = "Step 8 of 8: Ready";
+	}
 
 	return (
 		<Box
@@ -902,78 +838,29 @@ export default function VideoTranslateJobPage() {
 			<Typography variant='h4' component='h1' gutterBottom fontWeight={700} letterSpacing='-0.02em'>
 				{serverJob?.originalFilename || "Translation"}
 			</Typography>
-			<Typography variant='body1' color='text.secondary' sx={{ mb: 3, lineHeight: 1.6 }}>
-				{status === "complete"
-					? "Voiceovers for all languages are ready. Share this page or download the separate tracks from each card before links expire."
-					: "Upload a video. We store it, extract the soundtrack, then run Fal.ai (Whisper + TTS) and Gemini for four languages. The Languages list appears only after the file is in storage and audio is extracted."}
+		<Typography variant='body1' color='text.secondary' sx={{ mb: 3, lineHeight: 1.6 }}>
+			{status === "complete"
+				? "All translated videos are ready."
+				: "Upload a video and wait while we prepare translated versions automatically."}
 			</Typography>
+			{currentStepText ? (
+				<Paper variant='outlined' sx={{ borderRadius: 2, p: 1.5, mb: 2 }}>
+					<Typography variant='body2' fontWeight={600}>
+						{currentStepText}
+					</Typography>
+				</Paper>
+			) : null}
 
 			{pipelineError ? (
-				<Alert
-					severity='error'
-					sx={{ mb: 2 }}
-					onClose={() => setPipelineError(null)}
-					action={
-						<Button
-							color='inherit'
-							size='small'
-							onClick={() => {
-								void (async () => {
-									if (!translationId) return;
-									setPipelineError(null);
-									let job = serverJob;
-									if (job?.status === "error") {
-										job = await retryAfterServerError();
-										if (!job) return;
-									}
-									const c = batchContextRef.current[translationId];
-									if (c?.file) {
-										void runPipeline(translationId, { skipUpload: false, skipExtract: false });
-										return;
-									}
-									if (job?.status === "uploaded") {
-										void runPipeline(translationId, { skipUpload: true, skipExtract: false });
-										return;
-									}
-									if (job?.status === "audio_ready" && !job?.transcript) {
-										void runPipeline(translationId, { skipUpload: true, skipExtract: true });
-										return;
-									}
-								})();
-							}}
-						>
-							Retry
-						</Button>
-					}
-				>
+				<Alert severity='error' sx={{ mb: 2 }} onClose={() => setPipelineError(null)}>
 					{pipelineError}
 				</Alert>
 			) : null}
 
 			{status === "error" ? (
-				<Alert
-					severity='error'
-					sx={{ mb: 2 }}
-					action={
-						<Button
-							color='inherit'
-							size='small'
-							disabled={serverErrorRetrying}
-							startIcon={
-								serverErrorRetrying ? (
-									<Loader2 size={16} className='animate-spin' />
-								) : (
-									<RotateCw size={16} />
-								)
-							}
-							onClick={() => void retryAfterServerError()}
-						>
-							Try again
-						</Button>
-					}
-				>
+				<Alert severity='error' sx={{ mb: 2 }}>
 					{serverJob?.lastErrorMessage ||
-						"Something went wrong. Reset the job to continue from the last successful step."}
+						"Something went wrong during processing."}
 				</Alert>
 			) : null}
 
@@ -1064,50 +951,23 @@ export default function VideoTranslateJobPage() {
 							/>
 							<Box>
 								<Typography variant='body2' fontWeight={600}>
-									{preFalStep === "upload" ? "Uploading video to storage…" : "Extracting sound from the video (ffmpeg)…"}
+									{preFalStep === "upload" ? "Step 1 of 8: Uploading video" : "Step 2 of 8: Preparing audio"}
 								</Typography>
 								<Typography variant='caption' color='text.secondary'>
-									The Languages list will appear in the next step, before Fal.ai runs.
+									Please wait while processing continues automatically.
 								</Typography>
+								{preFalStep === "upload" ? (
+									<Box sx={{ mt: 1 }}>
+										<LinearProgress variant='determinate' value={uploadProgressPct} />
+										<Typography variant='caption' color='text.secondary'>
+											{uploadProgressPct}%
+										</Typography>
+									</Box>
+								) : null}
 							</Box>
 						</Stack>
-						<Tooltip title='Cancel'>
-							<IconButton aria-label='Cancel' onClick={() => cancelBatch(translationId)} size='small'>
-								<X size={20} />
-							</IconButton>
-						</Tooltip>
 					</Stack>
 				</Paper>
-			) : null}
-
-			{canResumeExtract ? (
-				<Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2 }} flexWrap='wrap'>
-					<Button variant='contained' color='secondary' onClick={continueFromUploaded} sx={{ fontWeight: 600 }}>
-						Extract audio and continue
-					</Button>
-					<Typography variant='caption' color='text.secondary' sx={{ maxWidth: 400 }}>
-						The file is in storage. Next we extract the soundtrack (MP3). After that, the Languages section appears and Fal.ai can run.
-					</Typography>
-				</Stack>
-			) : null}
-
-			{canStartFal ? (
-				<Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2 }} flexWrap='wrap'>
-					<Button variant='contained' color='secondary' onClick={continueFromAudioReady} sx={{ fontWeight: 600 }}>
-						Transcribe &amp; generate (Fal.ai)
-					</Button>
-					<Typography variant='caption' color='text.secondary' sx={{ maxWidth: 400 }}>
-						Audio is ready. Run Whisper, translation, and voiceover generation.
-					</Typography>
-				</Stack>
-			) : null}
-
-			{canRunMissing && LANGS.some((l) => !serverJob?.audioUrls?.[l]) ? (
-				<Stack direction='row' spacing={1.5} alignItems='center' sx={{ mb: 2 }}>
-					<Button variant='outlined' color='secondary' onClick={runMissingVoiceovers} sx={{ fontWeight: 600 }}>
-						Generate missing voiceovers
-					</Button>
-				</Stack>
 			) : null}
 
 			{dropError ? (
@@ -1118,18 +978,16 @@ export default function VideoTranslateJobPage() {
 
 			{cards.length > 0 ? (
 				<Typography variant='subtitle2' color='text.secondary' sx={{ mb: 1.5, letterSpacing: 0.06 }}>
-					Languages
+					Translated videos
 				</Typography>
 			) : null}
 
 			<Stack spacing={1.5}>
 				{cards.map((card) => {
 					const busy = ["uploading", "preparing", "synthesizing"].includes(card.status);
-					const showCancel = busy;
-					const showErrorRetry = card.status === "error";
-					const showIdleGenerate = card.status === "idle" && canRunMissing;
-					const showExportMux =
-						card.status === "done" && Boolean(card.audioUrl) && !card.muxedVideoUrl;
+					const showCancel = false;
+					const showErrorRetry = false;
+					const showExportMux = false;
 					return (
 						<Paper
 							key={card.id}
@@ -1199,25 +1057,8 @@ export default function VideoTranslateJobPage() {
 											</IconButton>
 										</Tooltip>
 									) : null}
-									{showIdleGenerate ? (
-										<Button
-											size='small'
-											variant='text'
-											color='secondary'
-											onClick={() => resynthOne(translationId, card.langCode)}
-										>
-											Generate
-										</Button>
-									) : null}
 									{showExportMux ? (
-										<Button
-											size='small'
-											variant='outlined'
-											color='secondary'
-											onClick={() => void exportMuxForLang(card.langCode)}
-										>
-											Build MP4
-										</Button>
+										<></>
 									) : null}
 								</Stack>
 							</Stack>
@@ -1229,8 +1070,7 @@ export default function VideoTranslateJobPage() {
 										audioSrc={card.audioUrl}
 									/>
 									<Typography variant='caption' color='text.secondary' display='block' sx={{ mt: 1 }}>
-										Signed links expire. The MP4 mixes ducked original audio with translation aligned to Whisper
-										segments.
+										Signed links expire after some time.
 									</Typography>
 								</Box>
 							) : null}

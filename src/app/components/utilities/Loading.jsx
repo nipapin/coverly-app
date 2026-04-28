@@ -1,12 +1,12 @@
 "use client";
 import { useAssetsStore } from "@/app/stores/AssetsStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 function Loading({ children, template }) {
   const { setTemplate } = useTemplateStore();
+  const storeTemplate = useTemplateStore((s) => s.template);
   const { setAssets, setSelectedAsset, setPosition, setFlipX, setFlipY } = useAssetsStore();
-  const [isTemplateLoaded, setIsTemplateLoaded] = useState(false);
 
   useEffect(() => {
     if (template && template.layers) {
@@ -19,14 +19,20 @@ function Loading({ children, template }) {
         setFlipY(template.flipY ?? false);
       }
       setTemplate(template, true);
-      setIsTemplateLoaded(true);
     } else {
       console.warn("Invalid template structure:", template);
     }
-  }, [template, setTemplate]);
+    // We bootstrap the stores from the incoming `template` prop exactly once
+    // per page load. The asset setters are stable Zustand actions, but
+    // including them just adds noise; `template` is the only meaningful
+    // dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template]);
 
-  // Show loading state until template is properly loaded
-  if (!isTemplateLoaded || !template) {
+  // The store's `template` becomes non-null synchronously inside `setTemplate`,
+  // so reading from there is what tells us "bootstrap finished" — no extra
+  // local boolean needed.
+  if (!storeTemplate || !template) {
     return null;
   }
 

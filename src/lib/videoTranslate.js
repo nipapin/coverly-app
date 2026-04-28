@@ -110,6 +110,12 @@ export function collectVideoTranslateS3Keys(row) {
 	if (row.extractedAudioS3Key) {
 		keys.add(row.extractedAudioS3Key);
 	}
+	if (row.vocalsS3Key) {
+		keys.add(row.vocalsS3Key);
+	}
+	if (row.accompanimentS3Key) {
+		keys.add(row.accompanimentS3Key);
+	}
 	const audio = row.audioS3Keys;
 	if (audio && typeof audio === "object") {
 		for (const v of Object.values(audio)) {
@@ -408,4 +414,45 @@ export async function muxVideoWithDuckedOriginalAndDub(videoPath, dubbedMp3Path,
 			outputPath,
 		]);
 	}
+}
+
+/**
+ * One MP4 with original video and two external audio tracks mixed together.
+ * Useful when accompaniment is already separated from vocals.
+ * @param {string} videoPath
+ * @param {string} accompanimentMp3Path
+ * @param {string} dubbedMp3Path
+ * @param {string} outputPath
+ */
+export async function muxVideoWithAccompanimentAndDub(
+	videoPath,
+	accompanimentMp3Path,
+	dubbedMp3Path,
+	outputPath,
+) {
+	await runFfmpeg([
+		"-y",
+		"-i",
+		videoPath,
+		"-i",
+		accompanimentMp3Path,
+		"-i",
+		dubbedMp3Path,
+		"-filter_complex",
+		"[1:a][2:a]amix=inputs=2:duration=longest:normalize=0[aout]",
+		"-map",
+		"0:v",
+		"-map",
+		"[aout]",
+		"-c:v",
+		"copy",
+		"-c:a",
+		"aac",
+		"-b:a",
+		"192k",
+		"-shortest",
+		"-movflags",
+		"+faststart",
+		outputPath,
+	]);
 }

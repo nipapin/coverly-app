@@ -11,17 +11,56 @@ import {
 	runFfmpeg,
 } from "@/lib/videoTranslate";
 
-/** @see https://fal.ai/models/fal-ai/elevenlabs/tts/turbo-v2.5/api — `voice` is name or id; `language_code` is ISO 639-1. */
-const TTS_MODEL = "fal-ai/elevenlabs/tts/turbo-v2.5";
+/** Balanced profile TTS endpoint (Qwen 0.6B custom voice). */
+const TTS_MODEL = "fal-ai/qwen-3-tts/text-to-speech/0.6b";
+const TRANSLATION_MODEL = "fal-ai/any-llm";
+const TRANSLATION_MODEL_NAME = "google/gemini-2.5-flash-lite";
 
 export const LANG_TTS = {
-	en: { voice: "Rachel", language_code: "en" },
-	de: { voice: "Rachel", language_code: "de" },
-	it: { voice: "Rachel", language_code: "it" },
-	es: { voice: "Rachel", language_code: "es" },
+	en: { voice: "Vivian", language: "English" },
+	de: { voice: "Serena", language: "German" },
+	it: { voice: "Ryan", language: "Italian" },
+	es: { voice: "Aiden", language: "Spanish" },
 };
 
 export const SUPPORTED_LANGS = ["en", "de", "it", "es"];
+
+/**
+ * Available Qwen voices for speaker assignment.
+ * @type {{ id: string, label: string, gender: 'F' | 'M' | 'N' }[]}
+ */
+export const AVAILABLE_VOICES = [
+	{ id: "Vivian", label: "Vivian", gender: "F" },
+	{ id: "Serena", label: "Serena", gender: "F" },
+	{ id: "Uncle_Fu", label: "Uncle Fu", gender: "M" },
+	{ id: "Dylan", label: "Dylan", gender: "M" },
+	{ id: "Eric", label: "Eric", gender: "M" },
+	{ id: "Ryan", label: "Ryan", gender: "M" },
+	{ id: "Aiden", label: "Aiden", gender: "M" },
+	{ id: "Ono_Anna", label: "Ono Anna", gender: "F" },
+	{ id: "Sohee", label: "Sohee", gender: "F" },
+];
+
+/** Default voice rotation order for auto-assigning speakers. */
+const SPEAKER_VOICE_SEQUENCE = ["Vivian", "Serena", "Dylan", "Eric", "Ryan", "Aiden", "Ono_Anna", "Sohee"];
+
+/**
+ * Build a default speaker → voice mapping from a list of detected speaker IDs.
+ * If no speakers detected, returns `{ "_default": "Rachel" }` (applied to all segments without speaker info).
+ * @param {string[]} speakers
+ * @returns {Record<string, string>}
+ */
+export function buildDefaultSpeakerVoices(speakers) {
+	if (!speakers || speakers.length === 0) {
+		return { _default: "Vivian" };
+	}
+	/** @type {Record<string, string>} */
+	const voices = {};
+	speakers.forEach((spk, i) => {
+		voices[spk] = SPEAKER_VOICE_SEQUENCE[i % SPEAKER_VOICE_SEQUENCE.length];
+	});
+	return voices;
+}
 
 const WHISPER_MODEL = "fal-ai/whisper";
 
@@ -30,10 +69,19 @@ const WHISPER_INPUT_BASE = {
 	chunk_level: "segment",
 	batch_size: 64,
 	num_speakers: null,
+	diarize: true,
 };
 
+const LANGUAGE_LABELS = {
+	en: "English",
+	de: "German",
+	it: "Italian",
+	es: "Spanish",
+};
+const SOURCE_TEXT_KEY = "__source";
+
 /**
- * @typedef {{ start: number, end: number, texts: Record<string, string> }} TranscriptSegment
+ * @typedef {{ start: number, end: number, texts: Record<string, string>, speaker: string | null }} TranscriptSegment
  */
 
 /**
@@ -57,48 +105,90 @@ function whisperChunkTimes(chunk) {
 }
 
 /**
+ * Extract speaker ID from a Whisper chunk (present when diarize: true).
+ * @param {unknown} chunk
+ * @returns {string | null}
+ */
+function whisperChunkSpeaker(chunk) {
+	if (chunk && typeof chunk === "object" && "speaker" in chunk) {
+		const s = chunk.speaker;
+		return typeof s === "string" && s ? s : null;
+	}
+	return null;
+}
+
+/**
  * Align per-language Whisper segment texts to one timeline (timestamps from first usable chunk per index).
+ * Speaker is sourced from the `en` run (primary language); falls back to any other language if missing.
  * @param {Record<string, { text: string, chunks?: unknown[] }>} byLang
  * @returns {TranscriptSegment[] | null}
  */
 export function mergeTranscriptSegments(byLang) {
-	let maxLen = 0;
-	/** @type {Record<string, unknown[]>} */
-	const arrays = {};
-	for (const l of SUPPORTED_LANGS) {
-		const ch = byLang[l]?.chunks;
-		const arr = Array.isArray(ch) ? ch : [];
-		arrays[l] = arr;
-		maxLen = Math.max(maxLen, arr.length);
-	}
-	if (maxLen === 0) {
+	const sourceChunks = Array.isArray(byLang[SOURCE_TEXT_KEY]?.chunks) ? byLang[SOURCE_TEXT_KEY].chunks : [];
+	if (sourceChunks.length === 0) {
 		return null;
 	}
 	/** @type {TranscriptSegment[]} */
 	const segments = [];
-	for (let i = 0; i < maxLen; i++) {
-		let start = 0;
-		let end = 0;
-		for (const l of SUPPORTED_LANGS) {
-			const ch = arrays[l][i];
-			if (ch) {
-				const t = whisperChunkTimes(ch);
-				if (t.end > t.start || t.start > 0) {
-					start = t.start;
-					end = t.end;
-					break;
-				}
-			}
-		}
+	for (let i = 0; i < sourceChunks.length; i++) {
+		const source = sourceChunks[i];
+		const { start, end } = whisperChunkTimes(source);
+		const speaker = whisperChunkSpeaker(source);
 		const texts = {};
 		for (const l of SUPPORTED_LANGS) {
-			const ch = arrays[l][i];
+			const arr = Array.isArray(byLang[l]?.chunks) ? byLang[l].chunks : [];
+			const ch = arr[i];
 			const raw = ch && typeof ch === "object" && "text" in ch ? ch.text : "";
 			texts[l] = String(raw ?? "").trim();
 		}
-		segments.push({ start, end, texts });
+		segments.push({ start, end, texts, speaker });
 	}
 	return segments;
+}
+
+function translationPrompt(text, targetLanguageLabel) {
+	return [
+		`Translate the following subtitle segment to ${targetLanguageLabel}.`,
+		"Preserve meaning, punctuation, and natural spoken style.",
+		"Return only translated text without explanations.",
+		"",
+		text,
+	].join("\n");
+}
+
+async function translateSegmentText(text, targetLang, cache) {
+	const clean = String(text || "").trim();
+	if (!clean) return "";
+	const cacheKey = `${targetLang}:${clean}`;
+	if (cache.has(cacheKey)) return cache.get(cacheKey);
+
+	const translated = await fal.subscribe(TRANSLATION_MODEL, {
+		input: {
+			model: TRANSLATION_MODEL_NAME,
+			priority: "latency",
+			temperature: 0.05,
+			prompt: translationPrompt(clean, LANGUAGE_LABELS[targetLang] || "target language"),
+			max_tokens: 2000,
+		},
+		logs: false,
+	});
+	const out = String(translated?.data?.output || "").trim();
+	cache.set(cacheKey, out || clean);
+	return out || clean;
+}
+
+/**
+ * Extract unique speaker IDs (sorted) from transcript segments.
+ * @param {TranscriptSegment[] | null | undefined} segments
+ * @returns {string[]}
+ */
+export function extractUniqueSpeakers(segments) {
+	if (!Array.isArray(segments)) return [];
+	const set = new Set();
+	for (const s of segments) {
+		if (s?.speaker) set.add(s.speaker);
+	}
+	return [...set].sort();
 }
 
 /**
@@ -107,27 +197,36 @@ export function mergeTranscriptSegments(byLang) {
  */
 export async function transcribeWithLanguageHintsDetailed(audioUrl) {
 	ensureFalConfigured();
-	const results = await Promise.all(
-		SUPPORTED_LANGS.map((language) =>
-			fal.subscribe(WHISPER_MODEL, {
-				input: {
-					audio_url: audioUrl,
-					...WHISPER_INPUT_BASE,
-					language,
-				},
-				logs: false,
-			}),
-		),
-	);
+	const whisper = await fal.subscribe(WHISPER_MODEL, {
+		input: {
+			audio_url: audioUrl,
+			...WHISPER_INPUT_BASE,
+			language: null,
+		},
+		logs: false,
+	});
+	const sourceChunks = Array.isArray(whisper?.data?.chunks) ? whisper.data.chunks : [];
+	const sourceText = String(whisper?.data?.text || "").trim();
+	const translationCache = new Map();
 	/** @type {Record<string, { text: string, chunks: unknown[] }>} */
 	const out = {};
-	for (let i = 0; i < SUPPORTED_LANGS.length; i++) {
-		const lang = SUPPORTED_LANGS[i];
-		const data = results[i].data;
-		const chunks = Array.isArray(data?.chunks) ? data.chunks : [];
+	out[SOURCE_TEXT_KEY] = { text: sourceText, chunks: sourceChunks };
+	for (const lang of SUPPORTED_LANGS) {
+		/** @type {unknown[]} */
+		const translatedChunks = [];
+		for (const chunk of sourceChunks) {
+			const rawText = chunk && typeof chunk === "object" && "text" in chunk ? chunk.text : "";
+			const translatedText = await translateSegmentText(String(rawText || ""), lang, translationCache);
+			if (chunk && typeof chunk === "object") {
+				translatedChunks.push({ ...chunk, text: translatedText });
+			}
+		}
 		out[lang] = {
-			text: (data?.text || "").trim(),
-			chunks,
+			text: translatedChunks
+				.map((chunk) => (chunk && typeof chunk === "object" && "text" in chunk ? chunk.text : ""))
+				.join(" ")
+				.trim(),
+			chunks: translatedChunks,
 		};
 	}
 	return out;
@@ -154,8 +253,14 @@ export function ensureFalConfigured() {
  * One TTS request → MP3 bytes.
  * @param {string} text
  * @param {string} langCode
+ * @param {string | null} [voice] Override voice; defaults to LANG_TTS[langCode].voice.
  */
-export async function synthesizeChunkTextToMp3Buffer(text, langCode) {
+export async function synthesizeChunkTextToMp3Buffer(
+	text,
+	langCode,
+	voice = null,
+	speakerEmbeddingUrl = null,
+) {
 	const tts = LANG_TTS[langCode];
 	if (!tts) {
 		throw new Error("Invalid language code");
@@ -164,8 +269,9 @@ export async function synthesizeChunkTextToMp3Buffer(text, langCode) {
 	const result = await fal.subscribe(TTS_MODEL, {
 		input: {
 			text,
-			voice: tts.voice,
-			language_code: tts.language_code,
+			voice: voice || tts.voice,
+			language: tts.language,
+			speaker_voice_embedding_file_url: speakerEmbeddingUrl || undefined,
 		},
 		logs: false,
 	});
@@ -180,13 +286,18 @@ export async function synthesizeChunkTextToMp3Buffer(text, langCode) {
 	return Buffer.from(await res.arrayBuffer());
 }
 
-export async function synthesizeTextToMp3Buffer(text, langCode) {
+export async function synthesizeTextToMp3Buffer(text, langCode, voice = null, speakerEmbeddingUrl = null) {
 	const parts = chunkTextForTts(text, 4000);
 	const workDir = await mkdtemp(join(tmpdir(), "video-translate-tts-"));
 	try {
 		const chunkPaths = [];
 		for (let i = 0; i < parts.length; i++) {
-			const buf = await synthesizeChunkTextToMp3Buffer(parts[i], langCode);
+			const buf = await synthesizeChunkTextToMp3Buffer(
+				parts[i],
+				langCode,
+				voice,
+				speakerEmbeddingUrl,
+			);
 			const chunkPath = join(workDir, `tts_${langCode}_${i}.mp3`);
 			await writeFile(chunkPath, buf);
 			chunkPaths.push(chunkPath);
@@ -200,12 +311,34 @@ export async function synthesizeTextToMp3Buffer(text, langCode) {
 }
 
 /**
+ * Resolve TTS voice for a segment given the speaker voices map.
+ * Falls back to `_default` key, then to the language default voice.
+ * @param {string | null} speaker
+ * @param {string} langCode
+ * @param {Record<string, string>} speakerVoices
+ * @returns {string | null}
+ */
+function resolveVoice(speaker, langCode, speakerVoices) {
+	if (speaker && speakerVoices[speaker]) return speakerVoices[speaker];
+	if (speakerVoices["_default"]) return speakerVoices["_default"];
+	return LANG_TTS[langCode]?.voice ?? null;
+}
+
+/**
  * Build one MP3 aligned to Whisper segment start times (same timeline as extracted audio / video).
+ * Each segment is synthesized with the voice assigned to its detected speaker.
  * @param {TranscriptSegment[]} segments
  * @param {string} langCode
  * @param {number} [minOutputDurationSec] pad with silence to at least this length (e.g. video duration)
+ * @param {Record<string, string>} [speakerVoices] speaker → voice name mapping
  */
-export async function synthesizeSegmentsToTimelineMp3Buffer(segments, langCode, minOutputDurationSec = 0) {
+export async function synthesizeSegmentsToTimelineMp3Buffer(
+	segments,
+	langCode,
+	minOutputDurationSec = 0,
+	speakerVoices = {},
+	speakerEmbeddings = {},
+) {
 	if (!segments?.length) {
 		throw new Error("No transcript segments");
 	}
@@ -218,10 +351,18 @@ export async function synthesizeSegmentsToTimelineMp3Buffer(segments, langCode, 
 			if (!text) {
 				continue;
 			}
+			const speaker = seg.speaker ?? null;
+			const voice = resolveVoice(speaker, langCode, speakerVoices);
+			const embeddingUrl = speaker ? speakerEmbeddings[speaker] || null : null;
 			const parts = chunkTextForTts(text, 4000);
 			const partPaths = [];
 			for (let p = 0; p < parts.length; p++) {
-				const buf = await synthesizeChunkTextToMp3Buffer(parts[p], langCode);
+				const buf = await synthesizeChunkTextToMp3Buffer(
+					parts[p],
+					langCode,
+					voice,
+					embeddingUrl,
+				);
 				const pp = join(workDir, `raw_${segIdx}_${p}.mp3`);
 				await writeFile(pp, buf);
 				partPaths.push(pp);

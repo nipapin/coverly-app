@@ -5,6 +5,7 @@ import { HeadObjectCommand } from "@aws-sdk/client-s3";
 import {
 	downloadS3ObjectToFile,
 	getVideoTranslateS3,
+	muxVideoWithAccompanimentAndDub,
 	muxVideoWithDuckedOriginalAndDub,
 	padMp3ToMinDuration,
 	probeMediaDurationSeconds,
@@ -53,6 +54,7 @@ export async function POST(req) {
 			);
 		}
 		const videoKey = row.videoS3Key;
+		const accompanimentKey = row.accompanimentS3Key;
 		const rawKeys = row.audioS3Keys;
 		const audioKeys = typeof rawKeys === "object" && rawKeys !== null ? rawKeys : {};
 		const audioKey = audioKeys[lang];
@@ -84,17 +86,31 @@ export async function POST(req) {
 			const videoPath = join(workDir, "source_video");
 			const dubPath = join(workDir, "dub.mp3");
 			const dubPadded = join(workDir, "dub_padded.mp3");
+			const accompanimentPath = join(workDir, "accompaniment.mp3");
+			const accompanimentPadded = join(workDir, "accompaniment_padded.mp3");
 			const outPath = join(workDir, "out.mp4");
 
 			await downloadS3ObjectToFile(client, bucket, videoKey, videoPath);
 			await downloadS3ObjectToFile(client, bucket, audioKey, dubPath);
+			if (accompanimentKey) {
+				await downloadS3ObjectToFile(client, bucket, accompanimentKey, accompanimentPath);
+			}
 
 			const videoDur = await probeMediaDurationSeconds(videoPath);
 			await padMp3ToMinDuration(dubPath, dubPadded, videoDur);
-
-			await muxVideoWithDuckedOriginalAndDub(videoPath, dubPadded, outPath, {
-				originalGain: originalGainFromEnv(),
-			});
+			if (!accompanimentKey) {
+				await muxVideoWithDuckedOriginalAndDub(videoPath, dubPadded, outPath, {
+					originalGain: originalGainFromEnv(),
+				});
+			} else {
+				await padMp3ToMinDuration(accompanimentPath, accompanimentPadded, videoDur);
+				await muxVideoWithAccompanimentAndDub(
+					videoPath,
+					accompanimentPadded,
+					dubPadded,
+					outPath,
+				);
+			}
 
 			const buf = await readFile(outPath);
 			await uploadFileToS3(client, bucket, objectKey, buf, "video/mp4");
