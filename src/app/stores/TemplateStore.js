@@ -169,14 +169,18 @@ export const useTemplateStore = create((set, get) => ({
   },
 
   /**
-   * Append a top-level group containing a single text child. Mirrors the
-   * shape pattern so writers and Layers panel work without special-casing.
+   * Append a top-level group containing a yellow background `shape` and a
+   * `text` sibling. Mirrors the data shape that `migrate-projects.mjs`
+   * produces, so newly-added text matches the post-split format from day
+   * one (the bg can be selected/recolored/moved independently).
    */
   addText: () => {
     const cur = get().template;
     if (!cur) return null;
+    const stamp = Date.now();
+    const baseName = `text-${stamp}`;
     const newLayer = {
-      name: `text-${Date.now()}`,
+      name: baseName,
       type: "group",
       image: "",
       x: { value: 0.35, unit: "percent" },
@@ -185,7 +189,20 @@ export const useTemplateStore = create((set, get) => ({
       height: { value: 80, unit: "pixels" },
       children: [
         {
-          name: `text-${Date.now()}-content`,
+          name: `${baseName}-bg`,
+          type: "shape",
+          color: "#ffee02",
+          x: { value: 0, unit: "pixels" },
+          y: { value: 0, unit: "pixels" },
+          width: { value: 1, unit: "percent" },
+          height: { value: 1, unit: "percent" },
+          offset: {
+            x: { value: 0, unit: "pixels" },
+            y: { value: 0, unit: "pixels" },
+          },
+        },
+        {
+          name: `${baseName}-content`,
           type: "text",
           content: "Sample Text",
         },

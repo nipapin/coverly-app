@@ -93,6 +93,37 @@
               },
               "children": [
                 {
+                  "name": "left-text-bg",
+                  "type": "shape",
+                  "color": "#ffee02",
+                  "x": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "width": {
+                    "value": 1,
+                    "unit": "percent"
+                  },
+                  "height": {
+                    "value": 1,
+                    "unit": "percent"
+                  },
+                  "offset": {
+                    "x": {
+                      "value": 0,
+                      "unit": "pixels"
+                    },
+                    "y": {
+                      "value": 0,
+                      "unit": "pixels"
+                    }
+                  }
+                },
+                {
                   "name": "left-text",
                   "type": "text",
                   "content": "Sample Text"
@@ -120,6 +151,37 @@
                 "unit": "pixels"
               },
               "children": [
+                {
+                  "name": "right-text-bg",
+                  "type": "shape",
+                  "color": "#ffee02",
+                  "x": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "y": {
+                    "value": 0,
+                    "unit": "pixels"
+                  },
+                  "width": {
+                    "value": 1,
+                    "unit": "percent"
+                  },
+                  "height": {
+                    "value": 1,
+                    "unit": "percent"
+                  },
+                  "offset": {
+                    "x": {
+                      "value": 0,
+                      "unit": "pixels"
+                    },
+                    "y": {
+                      "value": 0,
+                      "unit": "pixels"
+                    }
+                  }
+                },
                 {
                   "name": "right-text",
                   "type": "text",

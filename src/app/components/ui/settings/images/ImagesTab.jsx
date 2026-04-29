@@ -18,7 +18,7 @@ export default function ImagesTab() {
     if (!template?.layers) return [];
     return template.layers
       .filter((layer) => layer.children?.some((child) => child.type === "image"))
-      .flatMap((layer) => layer.children);
+      .flatMap((layer) => layer.children.filter((child) => child.type === "image"));
   }, [template]);
 
   const handleSwapImages = () => {

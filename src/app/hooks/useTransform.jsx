@@ -26,9 +26,12 @@ const TOP_ID_RE = /^n-(\d+)$/;
  *   - top-level assets: shift `startPoint` and `endPoint` by the same delta.
  *     Asset position along the segment is owned by `AssetsStore.position`,
  *     so we only translate the segment itself.
- *   - text children: drag is translated into a parent-group move. Text has
- *     no own x/y in the legacy model — its visible position is the group's,
- *     so we just shift the group by the same delta the text Rect moved by.
+ *   - text children: drag writes the text's own x/y onto
+ *     `layer.children[childIdx]`, leaving the parent group put. The bg shape
+ *     sibling (post text-card split) stays where it was, so the user gets
+ *     real per-text positioning.
+ *   - shape children: same model as text children — independent x/y/width/
+ *     height inside the parent group, no propagation to the group itself.
  *
  * Two writer shapes coexist for now:
  *   - **legacy** writers mutate `template.layers[*]` directly and let the
@@ -59,7 +62,9 @@ export const useTransform = () => {
       if (child.type === "image") {
         applyImageChildTransform(template, setTemplate, layerIdx, childIdx, target, e.manual);
       } else if (child.type === "text") {
-        applyTextChildDrag(template, setTemplate, layerIdx, target);
+        applyTextChildTransform(template, setTemplate, layerIdx, childIdx, target);
+      } else if (child.type === "shape") {
+        applyShapeChildTransform(template, setTemplate, layerIdx, childIdx, target);
       }
       return;
     }
@@ -142,32 +147,24 @@ function applyImageChildTransform(template, setTemplate, layerIdx, childIdx, tar
 }
 
 /**
- * Drag of a text child translates into a move of its parent group. The text
- * Rect itself fills the group (see `TextView`), so the absolute position the
- * user sees is the group's anchor + a constant offset. Shifting the group by
- * the same delta the user dragged keeps the text under the cursor.
+ * Per-text drag writer. Drag now moves the text inside the parent group
+ * instead of moving the whole group (the bg `shape` sibling stays put).
+ * The text's own `x` / `y` measures live on `layer.children[childIdx]` and
+ * default to (0, 0) for legacy templates that never set them.
  *
- * `_initialX` / `_initialY` are stamped by `TextView.onDragStart` so we have a
- * baseline even though Konva resets the local coords back to (0,0) once the
- * group is the one moving.
+ * `_initialX` / `_initialY` are stamped by `TextView.onDragStart` so we have
+ * a stable baseline; we compute the final position from `target.x() / y()`
+ * directly because the Text node owns its own coords (no parent-move trick
+ * any more).
  */
-function applyTextChildDrag(template, setTemplate, layerIdx, target) {
-  const layer = template.layers[layerIdx];
-  if (!layer) return;
+function applyTextChildTransform(template, setTemplate, layerIdx, childIdx, target) {
+  const layer = template.layers?.[layerIdx];
+  const child = layer?.children?.[childIdx];
+  if (!child) return;
   const initialX = target.attrs._initialX;
   const initialY = target.attrs._initialY;
   if (typeof initialX !== "number" || typeof initialY !== "number") return;
-  const shiftX = target.x() - initialX;
-  const shiftY = target.y() - initialY;
-  if (shiftX === 0 && shiftY === 0) return;
-
-  const baseX = readPixels(layer.x);
-  const baseY = readPixels(layer.y);
-
-  // Snap the dragged Rect back to its anchor inside the group; the visual
-  // position will be re-established on the next render via the group move.
-  target.x(initialX);
-  target.y(initialY);
+  if (target.x() === initialX && target.y() === initialY) return;
 
   const modifiedTemplate = {
     ...template,
@@ -175,8 +172,14 @@ function applyTextChildDrag(template, setTemplate, layerIdx, target) {
       if (idx !== layerIdx) return layerCur;
       return {
         ...layerCur,
-        x: pixelMeasure(baseX + shiftX),
-        y: pixelMeasure(baseY + shiftY),
+        children: layerCur.children.map((childCur, cIdx) => {
+          if (cIdx !== childIdx) return childCur;
+          return {
+            ...childCur,
+            x: pixelMeasure(target.x()),
+            y: pixelMeasure(target.y()),
+          };
+        }),
       };
     }),
   };
@@ -184,16 +187,46 @@ function applyTextChildDrag(template, setTemplate, layerIdx, target) {
 }
 
 /**
- * Best-effort read of a measure value as pixels. Percent measures need scene
- * size to convert and we don't have it here; in practice text groups in the
- * shipped templates use pixels, and the writer falls back to the raw value
- * otherwise so we don't lose data.
+ * Per-shape drag writer for shape children of a group (the new "background"
+ * layer pattern from the text-card split). Bakes any in-flight scale into
+ * width/height so the next drag starts from a clean state, then writes the
+ * full geometry back to `layer.children[childIdx]` as pixel measures.
  */
-function readPixels(measure) {
-  if (!measure) return 0;
-  if (typeof measure === "number") return measure;
-  if (measure.unit === "pixels") return measure.value || 0;
-  return measure.value || 0;
+function applyShapeChildTransform(template, setTemplate, layerIdx, childIdx, target) {
+  const layer = template.layers?.[layerIdx];
+  const child = layer?.children?.[childIdx];
+  if (!child) return;
+
+  const width = target.width() * target.scaleX();
+  const height = target.height() * target.scaleY();
+  target.scaleX(1);
+  target.scaleY(1);
+  target.width(width);
+  target.height(height);
+
+  const modifiedTemplate = {
+    ...template,
+    layers: template.layers.map((layerCur, idx) => {
+      if (idx !== layerIdx) return layerCur;
+      return {
+        ...layerCur,
+        children: layerCur.children.map((childCur, cIdx) => {
+          if (cIdx !== childIdx) return childCur;
+          return {
+            ...childCur,
+            x: pixelMeasure(target.x()),
+            y: pixelMeasure(target.y()),
+            width: pixelMeasure(width),
+            height: pixelMeasure(height),
+            offset: childCur.offset
+              ? { x: pixelMeasure(0), y: pixelMeasure(0) }
+              : childCur.offset,
+          };
+        }),
+      };
+    }),
+  };
+  setTemplate(modifiedTemplate);
 }
 
 /**

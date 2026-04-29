@@ -135,12 +135,20 @@ function migrateImageChild(legacyImageChild, parentSize, id) {
  */
 function migrateTextChild(legacyTextChild, parentSize, id) {
 	const content = typeof legacyTextChild.content === "string" ? legacyTextChild.content : "";
+	const x = legacyTextChild.x ? resolveMeasureToPixels(legacyTextChild.x, parentSize.width) : 0;
+	const y = legacyTextChild.y ? resolveMeasureToPixels(legacyTextChild.y, parentSize.height) : 0;
+	const width = legacyTextChild.width
+		? resolveMeasureToPixels(legacyTextChild.width, parentSize.width)
+		: parentSize.width;
+	const height = legacyTextChild.height
+		? resolveMeasureToPixels(legacyTextChild.height, parentSize.height)
+		: parentSize.height;
 	return makeNode({
 		id,
 		kind: NODE_KINDS.text,
 		name: legacyTextChild.name || "text",
 		legacyName: legacyTextChild.name,
-		transform: { x: 0, y: 0, width: parentSize.width, height: parentSize.height },
+		transform: { x, y, width, height },
 		props: {
 			text: content || "Sample Text",
 			background: DEFAULT_TEXT_BACKGROUND,
@@ -148,6 +156,37 @@ function migrateTextChild(legacyTextChild, parentSize, id) {
 			align: "center",
 			verticalAlign: "middle",
 			uppercase: true,
+		},
+	});
+}
+
+/**
+ * @param {any} legacyShapeChild
+ * @param {{ width: number, height: number }} parentSize
+ * @param {string} id
+ * @returns {import("./schema.js").SceneNode}
+ */
+function migrateShapeChild(legacyShapeChild, parentSize, id) {
+	const width = resolveMeasureToPixels(legacyShapeChild.width, parentSize.width);
+	const height = resolveMeasureToPixels(legacyShapeChild.height, parentSize.height);
+	const rawX = resolveMeasureToPixels(legacyShapeChild.x, parentSize.width);
+	const rawY = resolveMeasureToPixels(legacyShapeChild.y, parentSize.height);
+	const offsetX = resolveMeasureToPixels(legacyShapeChild?.offset?.x, width);
+	const offsetY = resolveMeasureToPixels(legacyShapeChild?.offset?.y, height);
+	return makeNode({
+		id,
+		kind: NODE_KINDS.shape,
+		name: legacyShapeChild.name || "shape",
+		legacyName: legacyShapeChild.name,
+		transform: {
+			x: rawX - offsetX,
+			y: rawY - offsetY,
+			width: width || parentSize.width,
+			height: height || parentSize.height,
+		},
+		props: {
+			shape: "rect",
+			fill: typeof legacyShapeChild.color === "string" ? legacyShapeChild.color : "#ffffff",
 		},
 	});
 }
@@ -162,6 +201,7 @@ function migrateChild(legacyChild, parentSize, id) {
 	if (!legacyChild || typeof legacyChild !== "object") return null;
 	if (legacyChild.type === "image") return migrateImageChild(legacyChild, parentSize, id);
 	if (legacyChild.type === "text") return migrateTextChild(legacyChild, parentSize, id);
+	if (legacyChild.type === "shape") return migrateShapeChild(legacyChild, parentSize, id);
 	return null;
 }
 
@@ -553,6 +593,37 @@ function textChildToLegacy(node, baseChild) {
 		name: baseChild?.name || node.legacyName || node.name,
 		type: "text",
 		content: typeof props.text === "string" ? props.text : baseChild?.content || "",
+		x: pixelMeasure(node.transform.x),
+		y: pixelMeasure(node.transform.y),
+		width: pixelMeasure(node.transform.width),
+		height: pixelMeasure(node.transform.height),
+	};
+}
+
+/**
+ * Re-emit a shape child of a group. Mirror of `migrateShapeChild` — emits
+ * pixel measures for x/y/width/height and zeros out `offset` (the offset is
+ * already folded into x/y on the way in).
+ *
+ * @param {import("./schema.js").SceneNode} node
+ * @param {object | undefined} baseChild
+ * @returns {object}
+ */
+function shapeChildToLegacy(node, baseChild) {
+	const props = node.props || {};
+	return {
+		...(baseChild || {}),
+		name: baseChild?.name || node.legacyName || node.name,
+		type: "shape",
+		color: props.fill || baseChild?.color || "#ffffff",
+		x: pixelMeasure(node.transform.x),
+		y: pixelMeasure(node.transform.y),
+		width: pixelMeasure(node.transform.width),
+		height: pixelMeasure(node.transform.height),
+		offset: {
+			x: pixelMeasure(0),
+			y: pixelMeasure(0),
+		},
 	};
 }
 
@@ -565,6 +636,7 @@ function childToLegacy(node, baseChild) {
 	if (!node) return null;
 	if (node.kind === NODE_KINDS.image) return imageChildToLegacy(node, baseChild);
 	if (node.kind === NODE_KINDS.text) return textChildToLegacy(node, baseChild);
+	if (node.kind === NODE_KINDS.shape) return shapeChildToLegacy(node, baseChild);
 	return null;
 }
 

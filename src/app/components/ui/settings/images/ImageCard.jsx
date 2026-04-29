@@ -18,10 +18,14 @@ export default function ImageCard({ layer }) {
     pending: false,
   });
   const [collapsed, setCollapsed] = useState(true);
-  const firstVariant = layer.variants[0];
-  if (!firstVariant) return null;
+
+  const sourceLayer = template.layers.find((templateLayer) => templateLayer.children?.some((child) => child.name === layer.name));
+  const sourceChild = sourceLayer?.children?.find((child) => child.name === layer.name && child.type === "image");
+  const variants = Array.isArray(sourceChild?.variants) ? sourceChild.variants : [];
+  const selectedSrc = sourceChild?.src || variants[0]?.src || "";
+
   const getSelectedVariant = () => {
-    return template.layers.find((_layer) => _layer.name === layer.name).children[0].src;
+    return selectedSrc;
   };
 
   const handleSubmit = (event) => {
@@ -42,14 +46,14 @@ export default function ImageCard({ layer }) {
   return (
     <Card component={"form"} onSubmit={handleSubmit}>
       <ImageCardHeader
-        src={firstVariant.src}
+        src={selectedSrc}
         name={layer.name}
-        count={layer.variants.length}
+        count={variants.length}
         onCollapse={() => setCollapsed(!collapsed)}
         collapsed={collapsed}
       />
       <Collapse in={collapsed}>
-        <ImageCardContent variants={layer.variants} src={firstVariant.src} name={layer.name} />
+        <ImageCardContent variants={variants} src={selectedSrc} name={layer.name} />
         <CardActions>
           <Button variant="outlined" fullWidth onClick={alignHorizontalCenter}>
             <AlignHorizontalCenter />
@@ -70,7 +74,7 @@ export default function ImageCard({ layer }) {
             startIcon={alertOptions.pending ? <CircularProgress size={16} /> : <AutoAwesome />}
             fullWidth
             type="submit"
-            disabled={alertOptions.pending}
+            disabled={alertOptions.pending || !selectedSrc}
           >
             Generate
           </Button>

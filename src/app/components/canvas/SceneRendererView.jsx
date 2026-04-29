@@ -97,7 +97,10 @@ function ImageNode({ node, parentWidth, parentHeight }) {
   const variants = node.props?.variants ?? [];
   const active = variants.find((v) => v.id === node.props?.activeVariantId) ?? variants[0];
   const [img] = useImage(active?.src ?? "", "anonymous");
-  if (!active || !img) return null;
+  if (!active) {
+    return <NoImagePlaceholder slotName={node.legacyName ?? node.name} parentWidth={parentWidth} parentHeight={parentHeight} />;
+  }
+  if (!img) return null;
 
   // The stored transform from `useTransform.handleTransformEnd` wins because
   // it captures any user repositioning. Otherwise we cover-fit the natural
@@ -125,6 +128,37 @@ function ImageNode({ node, parentWidth, parentHeight }) {
       draggable
       {...selectionHandlers(node.id, selectByEvent)}
     />
+  );
+}
+
+function NoImagePlaceholder({ slotName, parentWidth, parentHeight }) {
+  const size = 300;
+  const centerX = parentWidth * 0.5;
+  const centerY = parentHeight * 0.5;
+  return (
+    <Group
+      name={`${slotName}-placeholder`}
+      x={centerX}
+      y={centerY}
+      width={size}
+      height={size}
+      offsetX={size * 0.5}
+      offsetY={size * 0.5}
+      role="img"
+      aria-label="No image placeholder"
+    >
+      <Rect width={size} height={size} fill="transparent" />
+      <Text
+        text="No image"
+        fontSize={20}
+        fontWeight={600}
+        fill="white"
+        width={size}
+        height={size}
+        align="center"
+        verticalAlign="middle"
+      />
+    </Group>
   );
 }
 

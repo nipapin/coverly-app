@@ -35,6 +35,7 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 	};
 	const handleUpload = async (e) => {
 		const file = e.target.files[0];
+		if (!file) return;
 		const formData = new FormData();
 		formData.append("file", file);
 		const res = await fetch("/api/upload", {
@@ -48,23 +49,28 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 				if (_layer.name === name) {
 					return {
 						..._layer,
-						children: _layer.children.map((child) => ({
-							...child,
-							src: data.url,
-							variants: [{ src: data.url }]
-						}))
+						children: _layer.children.map((child) =>
+							child.type === "image"
+								? {
+										...child,
+										src: data.url,
+										variants: [{ src: data.url }]
+								  }
+								: child
+						)
 					};
 				}
 				return _layer;
 			})
 		};
 		setTemplate(modifiedTemplate);
+		e.target.value = "";
 	};
 	return (
 		<>
 			<CardHeader
 				avatar={<Avatar src={src} variant='rounded' />}
-				title={LayerNames[name]}
+				title={LayerNames[name] || name}
 				subheader={`${count} variants`}
 				action={
 					<Box display={"flex"}>
@@ -78,7 +84,7 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 					</Box>
 				}
 			/>
-			<input ref={inputRef} type='file' onChange={handleUpload} style={{ display: "none" }} />
+			<input ref={inputRef} type='file' accept='image/*' onChange={handleUpload} style={{ display: "none" }} />
 		</>
 	);
 }

@@ -167,7 +167,19 @@ test("migrate '2-images-2-text' splits scene horizontally, preserves all 5 layer
 	assert.equal(leftText.transform.width, 960);
 	assert.equal(rightText.transform.height, 130);
 
-	const leftTextChild = leftText.children[0];
+	// Post text-card split: each text frame holds two siblings — a yellow
+	// bg `shape` followed by the actual `text`. See the data migration in
+	// `scripts/scene/migrate-projects.mjs` for the source of truth.
+	assert.equal(leftText.children.length, 2);
+
+	const leftTextBg = leftText.children[0];
+	assert.equal(leftTextBg.kind, "shape");
+	assert.equal(leftTextBg.legacyName, "left-text-bg");
+	assert.equal(leftTextBg.props.fill, "#ffee02");
+	assert.equal(leftTextBg.transform.width, 960);
+	assert.equal(leftTextBg.transform.height, 130);
+
+	const leftTextChild = leftText.children[1];
 	assert.equal(leftTextChild.kind, "text");
 	assert.equal(leftTextChild.props.text, "Sample Text");
 	assert.equal(leftTextChild.props.background, "#ffee02");

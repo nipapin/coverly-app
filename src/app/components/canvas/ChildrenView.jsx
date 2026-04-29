@@ -1,6 +1,7 @@
 import { useLayersUiStore } from "@/app/stores/LayersUiStore";
 import { childNodeId } from "@/lib/scene";
 import ImageView from "./ImageView";
+import ShapeChildView from "./ShapeChildView";
 import TextView from "./TextView";
 
 export default function ChildrenView({ item, parent, parentPath, index }) {
@@ -13,6 +14,9 @@ export default function ChildrenView({ item, parent, parentPath, index }) {
   }
   if (item.type === "text") {
     return <TextView item={item} parent={parent} path={path} />;
+  }
+  if (item.type === "shape") {
+    return <ShapeChildView key={item.name} item={item} parent={parent} path={path} />;
   }
   return null;
 }
