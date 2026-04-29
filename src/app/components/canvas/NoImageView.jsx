@@ -1,5 +1,6 @@
 import { useDroplets } from "@/app/hooks/useDroplets";
 import { useLayoutStore } from "@/app/stores/LayoutStore";
+import { KONVA_LAYOUT_TICK_MS } from "./groupLayoutConstants";
 import { useEffect, useRef, useCallback, useMemo } from "react";
 import { Group, Rect, Text } from "react-konva";
 
@@ -72,7 +73,7 @@ export default function NoImageView({ item }) {
 		setTimeout(() => {
 			positionElements();
 			createDroplets();
-		}, 150);
+		}, KONVA_LAYOUT_TICK_MS);
 		// One-shot bootstrap — we deliberately don't reposition or recreate
 		// droplets when the callbacks' identities change.
 		// eslint-disable-next-line react-hooks/exhaustive-deps

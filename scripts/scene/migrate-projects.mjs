@@ -18,7 +18,7 @@
  */
 
 import { readFile, writeFile, readdir, stat } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { dirname, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -173,20 +173,21 @@ async function migrateSessions() {
 	const results = [];
 	for (const entry of entries) {
 		if (!entry.endsWith(".json")) continue;
-		const path = join(SESSIONS_DIR, entry);
-		const raw = await readFile(path, "utf8");
+		if (entry.includes("..") || entry.includes(sep)) continue;
+		const sessionPath = join(SESSIONS_DIR, entry);
+		const raw = await readFile(sessionPath, "utf8");
 		let session;
 		try {
 			session = JSON.parse(raw);
 		} catch (err) {
-			console.warn(`[migrate-projects] ${path}: invalid JSON, skipping (${err.message})`);
+			console.warn(`[migrate-projects] ${sessionPath}: invalid JSON, skipping (${err.message})`);
 			continue;
 		}
 		const { template: migrated, changed } = migrateTemplate(session);
 		if (changed) {
-			await writeFile(path, JSON.stringify(migrated), "utf8");
+			await writeFile(sessionPath, JSON.stringify(migrated, null, 2) + "\n", "utf8");
 		}
-		results.push({ path, changed });
+		results.push({ path: sessionPath, changed });
 	}
 	return results;
 }

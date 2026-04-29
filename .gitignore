@@ -50,3 +50,4 @@ certs
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+review.txt

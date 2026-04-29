@@ -4,6 +4,7 @@ import { useSelectionStore, useIsSelected } from "@/app/stores/SelectionStore";
 import { useTextStore } from "@/app/stores/TextStore";
 import { useEffect, useRef } from "react";
 import { Text } from "react-konva";
+import { GROUP_LAYOUT_DEBOUNCE_MS } from "./groupLayoutConstants";
 
 /**
  * Text label rendered inside a `group` layer. The yellow card that used to
@@ -47,7 +48,7 @@ export default function TextView({ item, parent, path }) {
 
       textRef.current.setAttrs({ x, y, width, height, padding: 0 });
       textRef.current.getStage()?.batchDraw();
-    }, 150);
+    }, GROUP_LAYOUT_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
   }, [item, font, fontSize, parent]);
 

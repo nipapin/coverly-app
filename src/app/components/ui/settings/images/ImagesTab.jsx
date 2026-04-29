@@ -9,6 +9,16 @@ import ImageCard from "./ImageCard";
 // (Gemini) is wired up — a single-option dropdown just confuses users.
 // Re-import and drop back into the JSX below once a second model ships.
 
+/** Indices of top-level layers that contain at least one image child. */
+function imageGroupIndices(layers) {
+  if (!Array.isArray(layers)) return [];
+  const out = [];
+  for (let i = 0; i < layers.length; i++) {
+    if (layers[i]?.children?.some((c) => c.type === "image")) out.push(i);
+  }
+  return out;
+}
+
 export default function ImagesTab() {
   const { stage } = useStageStore();
   const { template, setTemplate } = useTemplateStore();
@@ -22,13 +32,26 @@ export default function ImagesTab() {
   }, [template]);
 
   const handleSwapImages = () => {
-    setSwapImages(!swapImages);
-    const layers = template.layers;
-    const [imageLayer1, imageLayer2] = layers.filter((layer) => layer.children?.some((child) => child.type === "image"));
-    const newImageLayer1 = { ...imageLayer1, children: imageLayer2.children.map((child) => ({ ...child, name: imageLayer1.name })) };
-    const newImageLayer2 = { ...imageLayer2, children: imageLayer1.children.map((child) => ({ ...child, name: imageLayer2.name })) };
-    const otherLayers = layers.filter((layer) => !layer.children?.some((child) => child.type === "image"));
-    const newLayers = [newImageLayer1, newImageLayer2, ...otherLayers];
+    setSwapImages((v) => !v);
+    const all = template.layers;
+    const idx = imageGroupIndices(all);
+    if (idx.length < 2) return;
+    const [i0, i1] = idx;
+    const layerA = all[i0];
+    const layerB = all[i1];
+    // Swap each group's children at their original stack positions (do not move
+    // non-image layers). Image child `name` follows the slot (layer name).
+    const childrenIntoA = layerB.children.map((child) =>
+      child.type === "image" ? { ...child, name: layerA.name } : child,
+    );
+    const childrenIntoB = layerA.children.map((child) =>
+      child.type === "image" ? { ...child, name: layerB.name } : child,
+    );
+    const newLayers = all.map((layer, i) => {
+      if (i === i0) return { ...layerA, children: childrenIntoA };
+      if (i === i1) return { ...layerB, children: childrenIntoB };
+      return layer;
+    });
     setTemplate({ ...template, layers: newLayers });
     stage.batchDraw();
   };
@@ -42,7 +65,7 @@ export default function ImagesTab() {
       overflow="auto"
       sx={{
         "&::-webkit-scrollbar": { width: "10px" },
-        "&::-webkit-scrollbar-track": { backgroundh: "#13315C" },
+        "&::-webkit-scrollbar-track": { background: "#13315C" },
         "&::-webkit-scrollbar-thumb": { background: "white", borderRadius: "0.5rem", border: "4px solid #13315C" },
       }}
     >

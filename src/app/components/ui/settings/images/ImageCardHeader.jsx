@@ -10,24 +10,29 @@ const LayerNames = {
 	"right-image": "Right Image"
 };
 
-export default function ImageCardHeader({ src, name, count, onCollapse, collapsed }) {
+export default function ImageCardHeader({ src, name, count, onToggleExpand, expanded }) {
 	const { template, setTemplate } = useTemplateStore();
 	const clearSelection = useSelectionStore((s) => s.clear);
 	const { setResetDroplets } = useDropletsStore();
 	const inputRef = useRef(null);
 
+	const sourceLayer = template.layers.find((templateLayer) =>
+		templateLayer.children?.some((child) => child.name === name && child.type === "image"),
+	);
+
 	const handleDelete = () => {
+		if (!sourceLayer) return;
 		const modifiedTemplate = {
 			...template,
-			layers: template.layers.map((_layer) => {
-				if (_layer.name === name) {
-					return {
-						..._layer,
-						children: _layer.children.map((child) => (child.type === "image" ? { ...child, src: "", variants: [] } : child))
-					};
-				}
-				return _layer;
-			})
+			layers: template.layers.map((layer) => {
+				if (layer !== sourceLayer) return layer;
+				return {
+					...layer,
+					children: layer.children.map((child) =>
+						child.type === "image" && child.name === name ? { ...child, src: "", variants: [] } : child,
+					),
+				};
+			}),
 		};
 		clearSelection();
 		setResetDroplets();
@@ -36,6 +41,7 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 	const handleUpload = async (e) => {
 		const file = e.target.files[0];
 		if (!file) return;
+		if (!sourceLayer) return;
 		const formData = new FormData();
 		formData.append("file", file);
 		const res = await fetch("/api/upload", {
@@ -45,23 +51,21 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 		const data = await res.json();
 		const modifiedTemplate = {
 			...template,
-			layers: template.layers.map((_layer) => {
-				if (_layer.name === name) {
-					return {
-						..._layer,
-						children: _layer.children.map((child) =>
-							child.type === "image"
-								? {
-										...child,
-										src: data.url,
-										variants: [{ src: data.url }]
-								  }
-								: child
-						)
-					};
-				}
-				return _layer;
-			})
+			layers: template.layers.map((layer) => {
+				if (layer !== sourceLayer) return layer;
+				return {
+					...layer,
+					children: layer.children.map((child) =>
+						child.type === "image" && child.name === name
+							? {
+									...child,
+									src: data.url,
+									variants: [{ src: data.url }],
+							  }
+							: child,
+					),
+				};
+			}),
 		};
 		setTemplate(modifiedTemplate);
 		e.target.value = "";
@@ -80,7 +84,7 @@ export default function ImageCardHeader({ src, name, count, onCollapse, collapse
 						<IconButton onClick={handleDelete}>
 							<Delete />
 						</IconButton>
-						<IconButton onClick={onCollapse}>{collapsed ? <ExpandLess /> : <ExpandMore />}</IconButton>
+						<IconButton onClick={onToggleExpand}>{expanded ? <ExpandLess /> : <ExpandMore />}</IconButton>
 					</Box>
 				}
 			/>

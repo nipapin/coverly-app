@@ -17,7 +17,7 @@ export default function ImageCard({ layer }) {
     message: "",
     pending: false,
   });
-  const [collapsed, setCollapsed] = useState(true);
+  const [expanded, setExpanded] = useState(true);
 
   const sourceLayer = template.layers.find((templateLayer) => templateLayer.children?.some((child) => child.name === layer.name));
   const sourceChild = sourceLayer?.children?.find((child) => child.name === layer.name && child.type === "image");
@@ -49,10 +49,10 @@ export default function ImageCard({ layer }) {
         src={selectedSrc}
         name={layer.name}
         count={variants.length}
-        onCollapse={() => setCollapsed(!collapsed)}
-        collapsed={collapsed}
+        onToggleExpand={() => setExpanded((v) => !v)}
+        expanded={expanded}
       />
-      <Collapse in={collapsed}>
+      <Collapse in={expanded}>
         <ImageCardContent variants={variants} src={selectedSrc} name={layer.name} />
         <CardActions>
           <Button variant="outlined" fullWidth onClick={alignHorizontalCenter}>

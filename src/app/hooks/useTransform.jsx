@@ -204,6 +204,20 @@ function applyShapeChildTransform(template, setTemplate, layerIdx, childIdx, tar
   target.width(width);
   target.height(height);
 
+  const ix = target.attrs._initialX;
+  const iy = target.attrs._initialY;
+  const iw = target.attrs._initialWidth;
+  const ih = target.attrs._initialHeight;
+  if (
+    typeof ix !== "number" ||
+    typeof iy !== "number" ||
+    typeof iw !== "number" ||
+    typeof ih !== "number"
+  ) {
+    return;
+  }
+  if (target.x() === ix && target.y() === iy && width === iw && height === ih) return;
+
   const modifiedTemplate = {
     ...template,
     layers: template.layers.map((layerCur, idx) => {

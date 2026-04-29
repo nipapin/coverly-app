@@ -2,6 +2,7 @@ import { useTransform } from "@/app/hooks/useTransform";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useEffect, useRef } from "react";
 import { Rect } from "react-konva";
+import { GROUP_LAYOUT_DEBOUNCE_MS } from "./groupLayoutConstants";
 
 /**
  * Shape rendered as a child of a `group` layer. Mirror of `ShapeView` but
@@ -16,7 +17,7 @@ import { Rect } from "react-konva";
  * after a tick (the same trick `TextView` uses) keeps us honest without
  * wiring layout state through every child.
  */
-export default function ShapeChildView({ item, parent, path }) {
+export default function ShapeChildView({ item, path }) {
   const rectRef = useRef(null);
   const selectByEvent = useSelectionStore((s) => s.selectByEvent);
   const isSelected = useIsSelected(path);
@@ -44,9 +45,9 @@ export default function ShapeChildView({ item, parent, path }) {
         height,
       });
       rectRef.current.getStage()?.batchDraw();
-    }, 150);
+    }, GROUP_LAYOUT_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
-  }, [item, parent]);
+  }, [item]);
 
   return (
     <Rect
@@ -55,6 +56,13 @@ export default function ShapeChildView({ item, parent, path }) {
       fill={item.color}
       nodeKind="shape"
       draggable={isSelected}
+      onDragStart={(e) => {
+        const t = e.target;
+        t.attrs._initialX = t.x();
+        t.attrs._initialY = t.y();
+        t.attrs._initialWidth = t.width() * t.scaleX();
+        t.attrs._initialHeight = t.height() * t.scaleY();
+      }}
       onClick={(e) => selectByEvent(path, e)}
       onTap={(e) => selectByEvent(path, e)}
       onDragEnd={handleTransformEnd}

@@ -193,19 +193,25 @@ function TextNode({ node }) {
   const baseText = overrideText ?? node.props?.text ?? "Sample Text";
   const finalText = node.props?.uppercase === false ? baseText : baseText.toUpperCase();
 
+  const bg = node.props?.background;
+  const showTextBackground = typeof bg === "string" && bg.length > 0;
+
   return (
     <Group id={node.id} name={legacyKey} x={t.x} y={t.y}>
-      <Rect
-        nodeKind={NODE_KINDS.text}
-        x={0}
-        y={0}
-        width={t.width}
-        height={t.height}
-        fill={node.props?.background ?? "#ffee02"}
-        {...selectionHandlers(node.id, selectByEvent)}
-      />
+      {showTextBackground ? (
+        <Rect
+          nodeKind={NODE_KINDS.text}
+          x={0}
+          y={0}
+          width={t.width}
+          height={t.height}
+          fill={bg}
+          {...selectionHandlers(node.id, selectByEvent)}
+        />
+      ) : null}
       <Text
-        listening={false}
+        listening={!showTextBackground}
+        nodeKind={NODE_KINDS.text}
         x={0}
         y={9}
         width={t.width}
@@ -217,6 +223,7 @@ function TextNode({ node }) {
         fontSize={fontSize}
         fill={node.props?.fill ?? "#000000"}
         padding={0}
+        {...(!showTextBackground ? selectionHandlers(node.id, selectByEvent) : {})}
       />
     </Group>
   );

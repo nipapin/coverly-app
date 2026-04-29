@@ -218,11 +218,24 @@ function migrateGroupLayer(legacyLayer, sceneSize, id) {
 	const y = resolveMeasureToPixels(legacyLayer.y, sceneSize.height);
 
 	const childList = Array.isArray(legacyLayer.children) ? legacyLayer.children : [];
-	const children = childList
+	let children = childList
 		.map((child, childIdx) =>
 			migrateChild(child, { width, height }, childNodeId(id, childIdx)),
 		)
 		.filter((node) => node !== null);
+
+	// Text-card split: yellow fill lives on the `shape` sibling only (see
+	// migrate-projects.mjs). Omit duplicate default background on text so
+	// scene-first TextNode matches legacy TextView (no second yellow layer).
+	const hasShapeChild = children.some((n) => n.kind === NODE_KINDS.shape);
+	if (hasShapeChild) {
+		children = children.map((n) => {
+			if (n.kind !== NODE_KINDS.text) return n;
+			if (n.props?.background !== DEFAULT_TEXT_BACKGROUND) return n;
+			const { background: _bg, ...restProps } = n.props;
+			return { ...n, props: restProps };
+		});
+	}
 
 	return makeNode({
 		id,

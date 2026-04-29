@@ -17,6 +17,7 @@ import {
 	identityTransform,
 	makeNode,
 	migrateLegacyTemplate,
+	sceneToLegacyTemplate,
 	resolveMeasureToPixels,
 	serializeScene,
 	deserializeScene,
@@ -182,8 +183,34 @@ test("migrate '2-images-2-text' splits scene horizontally, preserves all 5 layer
 	const leftTextChild = leftText.children[1];
 	assert.equal(leftTextChild.kind, "text");
 	assert.equal(leftTextChild.props.text, "Sample Text");
-	assert.equal(leftTextChild.props.background, "#ffee02");
+	assert.equal(
+		"background" in leftTextChild.props,
+		false,
+		"text card fill is only on the shape sibling, not duplicated on text",
+	);
 	assert.equal(leftTextChild.props.uppercase, true);
+});
+
+test("round-trip: text card frame stays shape + text without duplicate text background", async () => {
+	const projects = await loadProjects();
+	const template = findTemplate(projects, "5mc", "2-images-2-text");
+	const scene = migrateLegacyTemplate(template, { projectId: "5mc" });
+	assert.equal(validateScene(scene), null);
+
+	const reverse = sceneToLegacyTemplate(scene, template);
+	const sceneAgain = migrateLegacyTemplate(reverse, { projectId: "5mc" });
+	assert.equal(validateScene(sceneAgain), null);
+
+	const leftText = sceneAgain.nodes.find((n) => n.legacyName === "left-text");
+	assert.ok(leftText);
+	assert.equal(leftText.children.length, 2);
+	assert.equal(leftText.children[0].kind, "shape");
+	assert.equal(leftText.children[1].kind, "text");
+	assert.equal(
+		"background" in leftText.children[1].props,
+		false,
+		"reverse migration must not reintroduce text rect fill when shape holds the card",
+	);
 });
 
 test("shape: offset arithmetic centers the divider line", async () => {

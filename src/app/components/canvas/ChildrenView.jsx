@@ -13,10 +13,10 @@ export default function ChildrenView({ item, parent, parentPath, index }) {
     return <ImageView key={item.name} item={item} path={path} />;
   }
   if (item.type === "text") {
-    return <TextView item={item} parent={parent} path={path} />;
+    return <TextView key={item.name} item={item} parent={parent} path={path} />;
   }
   if (item.type === "shape") {
-    return <ShapeChildView key={item.name} item={item} parent={parent} path={path} />;
+    return <ShapeChildView key={item.name} item={item} path={path} />;
   }
   return null;
 }

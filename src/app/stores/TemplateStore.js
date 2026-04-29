@@ -88,24 +88,23 @@ export const useTemplateStore = create((set, get) => ({
   scene: null,
   setTemplate: (template, initial = false, save = true, saveHistory = true) => {
     if (initial) {
-      // При инициализации очищаем и создаем новую историю
+      // On first load: reset and seed undo history from this template.
       initializeHistory(template);
       set({ template, scene: resolveScene(template) });
       return;
     }
 
-    // Сохраняем в историю перед изменением (если не отключено)
+    // Push current template onto undo history before applying the new one (unless disabled).
     if (saveHistory && typeof window !== "undefined") {
       const historyStr = window.localStorage.getItem(HISTORY_KEY);
       const history = historyStr ? JSON.parse(historyStr) : [];
       const currentIndex = parseInt(window.localStorage.getItem(HISTORY_INDEX_KEY) || "0");
 
-      // Если мы не в конце истории (например, после undo), удаляем все после текущего индекса
+      // If user is not at the tip (e.g. after undo), drop redo tail.
       const newHistory = history.slice(0, currentIndex + 1);
 
       newHistory.push(JSON.parse(JSON.stringify(stripForHistory(template))));
 
-      // Ограничиваем размер истории
       if (newHistory.length > MAX_HISTORY_SIZE) {
         newHistory.shift();
         window.localStorage.setItem(HISTORY_INDEX_KEY, (MAX_HISTORY_SIZE - 1).toString());
@@ -116,13 +115,10 @@ export const useTemplateStore = create((set, get) => ({
       window.localStorage.setItem(HISTORY_KEY, JSON.stringify(newHistory));
     }
 
-    // Обновляем состояние (template + производный scene в одном set).
-    // We always derive a fresh scene on write — the persisted one (if any)
-    // would already be stale because the template just changed.
+    // One set: always re-derive scene from the new template (any persisted `_scene` is stale).
     const derivedScene = deriveSceneFromTemplate(template);
     set({ template, scene: derivedScene });
 
-    // Сохраняем в сессию (если не отключено)
     if (save && typeof window !== "undefined") {
       const pathname = window.location.pathname;
       const sessionId = pathname.split("/").pop();
