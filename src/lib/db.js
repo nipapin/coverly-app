@@ -35,12 +35,12 @@ function resolveSslCaPath(raw) {
 		p = path.resolve(/*turbopackIgnore: true*/ p);
 	}
 
-	if (fs.existsSync(p)) {
+	if (fs.existsSync(/*turbopackIgnore: true*/ p)) {
 		return p;
 	}
 	const withForward = p.replace(/\\/g, "/");
-	if (withForward !== p && fs.existsSync(withForward)) {
-		return path.resolve(withForward);
+	if (withForward !== p && fs.existsSync(/*turbopackIgnore: true*/ withForward)) {
+		return path.resolve(/*turbopackIgnore: true*/ withForward);
 	}
 	return p;
 }
@@ -53,11 +53,11 @@ const CA_FILE_NAMES = ["root.crt", "server-ca.pem", "ca.pem", "ca-cert.pem", "ss
  * @returns {string | null} Absolute path to a CA file, or null
  */
 function resolveToCaFile(resolved) {
-	if (!fs.existsSync(resolved)) {
+	if (!fs.existsSync(/*turbopackIgnore: true*/ resolved)) {
 		return null;
 	}
-	const p = path.resolve(resolved);
-	const st = fs.statSync(p);
+	const p = path.resolve(/*turbopackIgnore: true*/ resolved);
+	const st = fs.statSync(/*turbopackIgnore: true*/ p);
 	if (st.isFile()) {
 		return p;
 	}
@@ -65,7 +65,7 @@ function resolveToCaFile(resolved) {
 		for (const name of CA_FILE_NAMES) {
 			const f = path.join(/*turbopackIgnore: true*/ p, name);
 			try {
-				if (fs.existsSync(f) && fs.statSync(f).isFile()) {
+				if (fs.existsSync(/*turbopackIgnore: true*/ f) && fs.statSync(/*turbopackIgnore: true*/ f).isFile()) {
 					return path.resolve(/*turbopackIgnore: true*/ f);
 				}
 			} catch {
@@ -118,16 +118,16 @@ export function getPool() {
 	const caPathRaw = process.env.PG_CA_PATH;
 	if (caPathRaw) {
 		const resolved = resolveSslCaPath(caPathRaw);
-		if (!resolved || !fs.existsSync(resolved)) {
+		if (!resolved || !fs.existsSync(/*turbopackIgnore: true*/ resolved)) {
 			throw new Error(
 				`PG_CA_PATH not found: "${caPathRaw.trim()}". In .env use forward slashes (e.g. C:/Users/.../postgresql/root.crt) so \\r is not parsed as a newline.`,
 			);
 		}
 		const caFile = resolveToCaFile(resolved);
 		if (!caFile) {
-			if (fs.statSync(resolved).isDirectory()) {
+			if (fs.statSync(/*turbopackIgnore: true*/ resolved).isDirectory()) {
 				throw new Error(
-					`PG_CA_PATH points to a directory: "${resolved}". Set it to the CA certificate file, e.g. ${path.join(resolved, "root.crt")} (tried: ${CA_FILE_NAMES.join(", ")}).`,
+					`PG_CA_PATH points to a directory: "${resolved}". Set it to the CA certificate file, e.g. ${path.join(/*turbopackIgnore: true*/ resolved, "root.crt")} (tried: ${CA_FILE_NAMES.join(", ")}).`,
 				);
 			}
 			throw new Error(`PG_CA_PATH is not a regular file: "${resolved}"`);
@@ -140,7 +140,7 @@ export function getPool() {
 		);
 		config.ssl = {
 			rejectUnauthorized,
-			ca: fs.readFileSync(caFile),
+			ca: fs.readFileSync(/*turbopackIgnore: true*/ caFile),
 		};
 	} else {
 		// e.g. managed Postgres with verify-full + custom CA, no PG_CA_PATH file: still allow explicit opt-in
