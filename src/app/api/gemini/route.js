@@ -27,7 +27,11 @@ const SUPPORTED_INPUT_FORMATS = new Set(["jpeg", "png", "webp"]);
 export async function POST(request) {
     try {
         const { image, text } = await request.json();
-        const imageBuffer = Buffer.from(image, "base64");
+
+        // FIX 1: Strip the data URI prefix if it was sent from the frontend
+        const cleanBase64 = image.replace(/^data:image\/\w+;base64,/, "");
+
+        const imageBuffer = Buffer.from(cleanBase64, "base64");
         const imageMeta = await sharp(imageBuffer).metadata();
 
         if (!SUPPORTED_INPUT_FORMATS.has(imageMeta.format)) {
@@ -42,16 +46,20 @@ export async function POST(request) {
         const mimeType = `image/${imageMeta.format}`;
         const originalSize = [imageMeta.width, imageMeta.height];
 
-        const prompt = [
-            { text: text },
-            { inlineData: { mimeType: mimeType, data: image } },
-        ];
-
+        // FIX 2: Correctly wrap the prompt inside a Content object with 'role' and 'parts'
         const generateConfig = {
             model: "gemini-3-pro-image-preview",
-            contents: prompt,
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        { text: text },
+                        { inlineData: { mimeType: mimeType, data: cleanBase64 } } // Use the cleaned base64
+                    ]
+                }
+            ],
             config: {
-                responseModalities: ["TEXT", "IMAGE"],
+                responseModalities: ["IMAGE"],
                 candidateCount: 1,
             },
         };
