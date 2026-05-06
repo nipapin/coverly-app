@@ -21,11 +21,24 @@ export async function OPTIONS() {
     });
 }
 
+// Formats Gemini image-generation models accept as input.
+const SUPPORTED_INPUT_FORMATS = new Set(["jpeg", "png", "webp"]);
+
 export async function POST(request) {
     try {
         const { image, text } = await request.json();
         const imageBuffer = Buffer.from(image, "base64");
         const imageMeta = await sharp(imageBuffer).metadata();
+
+        if (!SUPPORTED_INPUT_FORMATS.has(imageMeta.format)) {
+            return NextResponse.json(
+                {
+                    error: `Unsupported image format "${imageMeta.format}". Expected one of: ${[...SUPPORTED_INPUT_FORMATS].join(", ")}.`,
+                },
+                { status: 400, headers: corsHeaders }
+            );
+        }
+
         const mimeType = `image/${imageMeta.format}`;
         const originalSize = [imageMeta.width, imageMeta.height];
 
@@ -34,28 +47,24 @@ export async function POST(request) {
             { inlineData: { mimeType: mimeType, data: image } },
         ];
 
+        const generateConfig = {
+            model: "gemini-3-pro-image-preview",
+            contents: prompt,
+            config: {
+                responseModalities: ["TEXT", "IMAGE"],
+                candidateCount: 1,
+            },
+        };
+
         const geminiResponse = await genai.models
-            .generateContent({
-                model: "gemini-3-pro-image-preview",
-                contents: prompt,
-                config: {
-                    responseModalities: ["IMAGE"],
-                    candidateCount: 1,
-                },
-            })
+            .generateContent(generateConfig)
             .then((response) => ({ parts: response.candidates?.[0]?.content?.parts || [] }))
             .catch((error) => ({ error: error.message }));
 
         if ("error" in geminiResponse) {
             return NextResponse.json({
-                error: geminiResponse.error, generateConfig: {
-                    model: "gemini-3-pro-image-preview",
-                    contents: prompt,
-                    config: {
-                        responseModalities: ["IMAGE"],
-                        candidateCount: 1,
-                    },
-                }
+                error: geminiResponse.error,
+                generateConfig,
             }, {
                 status: 500,
                 headers: corsHeaders
