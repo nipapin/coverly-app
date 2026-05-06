@@ -1,0 +1,142 @@
+Code review: text-card split, shape children, scene migration, and related UI
+================================================================================
+Scope: scripts/scene/migrate-projects.mjs, src/lib/scene/migrate.js, canvas views
+(ChildrenView, TextView, ShapeChildView, SceneRendererView), useTransform.jsx,
+TemplateStore.js, scripts/scene/test-migrate.mjs, images settings (ImageCard*,
+ImagesTab), and data migration patterns.
+
+Note: `git diff HEAD` was empty at review time (working tree matched HEAD), so
+this review reflects the current files on the branch rather than a line-by-line
+diff against another base.
+
+
+1. Code quality and readability
+--------------------------------
+
+Strengths
+- migrate-projects.mjs is unusually clear: top-level comment explains before/after,
+  idempotency, and touched paths. Functions are small and named for a single job.
+- useTransform.jsx documents the two writer paths (legacy vs scene-first) and
+  child id regexes; that helps future refactors.
+- ShapeChildView.jsx explains why getParent() is used instead of props — good
+  context for the next reader.
+- test-migrate.mjs gives good coverage (measures, migration fixtures, round-trip,
+  id stability).
+
+Suggestions
+- Magic number `150` appears in both TextView and ShapeChildView for the Konva
+  layout timeout. Extract a shared constant (e.g. GROUP_LAYOUT_DEBOUNCE_MS) and
+  a one-line comment pointing to GroupView’s effect ordering, so drift is harder.
+- ShapeChildView lists `parent` in the useEffect dependency array but does not
+  use `parent` inside the effect. Either remove it from the dependency list or
+  use it (e.g. if parent identity should force a relayout); otherwise ESLint may
+  warn and readers get a false signal.
+- ChildrenView: ImageView and ShapeChildView use `key={item.name}`; TextView
+  does not. Prefer a consistent, stable key for all three (e.g. key={item.name}
+  or path-based) to avoid unnecessary remounts or wrong reconciliation if names
+  collide.
+- ImageCard.jsx: `Collapse in={collapsed}` together with state named `collapsed`
+  is easy to misread (MUI’s `in` means “expanded”). Renaming state to `open` or
+  `expanded` (and inverting logic) would match MUI semantics and reduce mistakes.
+- TemplateStore still mixes English comments with Russian comments in the same
+  block; pick one language for maintainability in an international team.
+
+
+2. Potential bugs or issues
+---------------------------
+
+Scene-first vs legacy visual parity (important)
+- Legacy path: JSON migration adds an explicit yellow `shape` sibling; TextView
+  no longer draws the card background.
+- Scene path: migrateTextChild() still sets `props.background` to the default
+  yellow, AND migrateShapeChild() creates a separate shape child. SceneRendererView
+  TextNode still renders a filled Rect behind the text using `node.props?.background`.
+  Result: two yellow layers in the pilot renderer for migrated “text card”
+  groups (shape + text background). Tests currently assert both the shape fill
+  and `leftTextChild.props.background === "#ffee02"`, which encodes that duplication
+  in the scene model rather than resolving it.
+  Recommendation: pick one source of truth for the yellow card in the scene model
+  (either drop background from text after introducing shape, or omit the extra
+  shape in scene migration when background is folded into text), and align
+  SceneRendererView TextNode with TextView for the chosen model.
+
+applyShapeChildTransform (useTransform.jsx)
+- Unlike applyTextChildTransform, there is no early return when the node did not
+  move or resize. Every dragEnd may write template + history + save even for a
+  no-op, which is noisy and could cause extra network churn.
+- After baking scale into width/height, consider mirroring the text path with
+  `_initialX/_initialY` or comparing previous attrs to skip writes when nothing
+  changed.
+
+ImagesTab.jsx
+- `handleSwapImages` builds `newLayers` from `layers.filter(...)` where `layers`
+  is `template.layers` filtered to groups that contain images, then concatenates
+  with `otherLayers`. That reorders the full template layer stack relative to
+  non-image layers; verify this is intended for all templates (e.g. text-only
+  layers between image groups).
+- Scrollbar sx uses `backgroundh: "#13315C"` on the track — likely a typo for
+  `background`. As written, the track style may not apply (invalid property).
+
+ImageCard / ImageCardHeader
+- Header delete/upload match `template.layers` by `_layer.name === name` where
+  `name` is the image child’s name. ImageCard resolves the parent via children;
+  delete assumes the parent group’s `name` equals the image child’s `name`.
+  That holds for shipped fixtures but is brittle if naming diverges. Prefer
+  finding the same parent group as ImageCard’s `sourceLayer` logic.
+
+migrate-projects.mjs
+- Sessions are written with `JSON.stringify(migrated)` (no formatting); projects
+  use pretty-print. Harmless but inconsistent for debugging and VCS noise.
+- Optional hardening: skip `entry` values containing `path.sep` or `..` before
+  join(), in case the filesystem ever surfaces odd names.
+
+
+3. Security considerations
+---------------------------
+
+- migrate-projects.mjs reads/writes projects.json and ./sessions/*.json on disk.
+  Safe if run only by developers in a trusted repo; do not expose as a public
+  HTTP endpoint without authentication and path allowlisting.
+- TemplateStore posts `template` and derived `scene` to `/api/workflow/save` with
+  `sessionId` from the URL. Server-side validation of session ownership and body
+  size limits remains the real security boundary; client code should not assume
+  the pathname is always a benign id.
+- deserializeScene() is a thin JSON.parse with no validation. Any future caller
+  that deserializes network-supplied JSON should validate (e.g. validateScene)
+  before use to avoid driving the UI with attacker-controlled structure.
+- User uploads in ImageCardHeader (fetch to /api/upload) depend on server
+  validation of file type and size; not changed here but remains the sensitive path.
+
+
+4. Best practices compliance
+-----------------------------
+
+- Idempotent data migration in migrate-projects.mjs matches good practice for
+  one-off scripts; deleting stale `_scene` after template mutation matches the
+  comment in migrateTemplate and avoids stale mirrors — good.
+- Zustand setTemplate re-derives scene from template after writes, which keeps a
+  single direction of truth for edits that go through legacy template mutation;
+  documented in the store — good.
+- React Konva: reading parent dimensions in useEffect + requestAnimationFrame or
+  LayoutEffect is a known pattern; 150ms timeout is a bit arbitrary — consider
+  rAF/double-rAF or listening to parent layout if flicker or wrong first paint
+  appears on slow devices.
+- Tests: asserting every shipped template migrates and has unique ids is strong.
+  Consider adding one test that sceneToLegacyTemplate round-trips a group that
+  contains both shape and text children after the split, if not already covered
+  elsewhere.
+
+
+5. Specific improvement checklist
+---------------------------------
+
+[ ] Resolve double yellow background in scene-first rendering / migration.
+[ ] Add no-op guard (or baseline coords) in applyShapeChildTransform to match text.
+[ ] Extract shared layout debounce constant; fix ShapeChildView effect deps.
+[ ] Add keys to TextView in ChildrenView; fix ImagesTab scrollbar typo backgroundh.
+[ ] Rename ImageCard collapse state or invert `Collapse in={...}` for clarity.
+[ ] Align ImageCardHeader delete/upload with the same parent resolution as ImageCard.
+[ ] (Optional) Harden migrate-projects session filenames; pretty-print session JSON.
+
+
+End of review.
