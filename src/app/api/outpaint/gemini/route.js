@@ -98,7 +98,7 @@ class ImageOutpainter {
 	}
 
 	async createCanvas() {
-		const inputImagePath = path.join(process.cwd(), this.inputImagePath);
+		const inputImagePath = path.join(/*turbopackIgnore: true*/ process.cwd(), this.inputImagePath);
 		this.getCroppedArea();
 		this.getCompositeRect();
 		const imageBuffer = await sharp(inputImagePath).resize(this.imageRect.width, this.imageRect.height).extract(this.croppedArea).toBuffer();

@@ -25,7 +25,9 @@ const enhanceUserPrompt = async (prompt, image) => {
 export async function POST(request) {
   const { prompt, image } = await request.json();
   const imagePath =
-    process.env.NODE_ENV === "development" ? path.join(process.cwd(), "public", image) : path.join(process.cwd(), image);
+    process.env.NODE_ENV === "development"
+      ? path.join(/*turbopackIgnore: true*/ process.cwd(), "public", image)
+      : path.join(/*turbopackIgnore: true*/ process.cwd(), image);
   const base64Image = fs.readFileSync(imagePath, "base64");
   const mimeType = mime.lookup(imagePath);
   const enhancedPrompt = await enhanceUserPrompt(prompt, { base64Image, mimeType });

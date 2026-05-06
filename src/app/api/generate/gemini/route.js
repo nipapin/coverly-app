@@ -96,8 +96,8 @@ Sharpening: Apply a noticeable level of sharpening to ensure crisp edges and emp
 		if (part.inlineData) {
 			const fileName = crypto.randomUUID() + ".png";
 			const dirPath = process.env.NODE_ENV === "development" ? ["public", "generations"] : ["generations"];
-			fs.mkdirSync(path.join(process.cwd(), ...dirPath), { recursive: true });
-			const filePath = path.join(process.cwd(), ...dirPath, fileName);
+			fs.mkdirSync(path.join(/*turbopackIgnore: true*/ process.cwd(), ...dirPath), { recursive: true });
+			const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), ...dirPath, fileName);
 			const buffer = Buffer.from(part.inlineData.data, "base64");
 			fs.writeFileSync(filePath, await resizeToOriginalSize(buffer, image.base64Image));
 			Logger.info("generateImage response part inlineData", { fileName });
@@ -128,7 +128,10 @@ const resizeToOriginalSize = async (buffer, base64Image) => {
 
 export async function POST(req) {
 	const { src, prompt } = await req.json();
-	const imagePath = process.env.NODE_ENV === "development" ? path.join(process.cwd(), "public", src) : path.join(process.cwd(), src);
+	const imagePath =
+		process.env.NODE_ENV === "development"
+			? path.join(/*turbopackIgnore: true*/ process.cwd(), "public", src)
+			: path.join(/*turbopackIgnore: true*/ process.cwd(), src);
 	const base64Image = fs.readFileSync(imagePath, "base64");
 	const mimeType = mime.lookup(imagePath);
 	// const analystPrompt = await retrySystem(() => describeInputImage({ base64Image, mimeType }));

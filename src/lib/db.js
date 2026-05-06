@@ -28,10 +28,11 @@ function resolveSslCaPath(raw) {
 
 	// Relative paths (e.g. ./certs/root.crt): resolve from process.cwd() so they work
 	// in Next dev vs scripts regardless of the importing file’s directory.
+	// turbopackIgnore: keep these out of NFT traces; runtime-only filesystem access.
 	if (!path.isAbsolute(p)) {
-		p = path.resolve(process.cwd(), p);
+		p = path.resolve(/*turbopackIgnore: true*/ process.cwd(), p);
 	} else {
-		p = path.resolve(p);
+		p = path.resolve(/*turbopackIgnore: true*/ p);
 	}
 
 	if (fs.existsSync(p)) {
@@ -62,10 +63,10 @@ function resolveToCaFile(resolved) {
 	}
 	if (st.isDirectory()) {
 		for (const name of CA_FILE_NAMES) {
-			const f = path.join(p, name);
+			const f = path.join(/*turbopackIgnore: true*/ p, name);
 			try {
 				if (fs.existsSync(f) && fs.statSync(f).isFile()) {
-					return path.resolve(f);
+					return path.resolve(/*turbopackIgnore: true*/ f);
 				}
 			} catch {
 				/* ignore */
