@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
 import { useEffect, useRef } from "react";
@@ -79,6 +80,10 @@ export default function ImageSource({ variant, visible, layerName, path }) {
       {...(visible ? { id: path } : {})}
       onClick={(e) => selectByEvent(path, e)}
       onTap={(e) => selectByEvent(path, e)}
+      onDragStart={(e) => {
+        stampDragAxisAnchor(e.target);
+      }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
       onDragEnd={handleTransformEnd}
     />
   );

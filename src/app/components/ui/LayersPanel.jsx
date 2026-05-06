@@ -42,6 +42,17 @@ const KIND_META = {
  * Reads `scene` directly from `TemplateStore` (derived in Phase 0). When the
  * scene is empty (e.g. before the workflow loads) the panel hides itself.
  */
+function findSceneNodeById(nodes, id) {
+  for (const n of nodes || []) {
+    if (n.id === id) return n;
+    if (Array.isArray(n.children) && n.children.length > 0) {
+      const inner = findSceneNodeById(n.children, id);
+      if (inner) return inner;
+    }
+  }
+  return null;
+}
+
 export default function LayersPanel() {
   const scene = useTemplateStore((s) => s.scene);
   const addShape = useTemplateStore((s) => s.addShape);
@@ -63,12 +74,16 @@ export default function LayersPanel() {
       if (tag === "input" || tag === "textarea" || t?.isContentEditable) return;
       if (selectedIds.length === 0) return;
       e.preventDefault();
-      for (const id of selectedIds) removeNodeById(id);
+      for (const id of selectedIds) {
+        const hit = findSceneNodeById(scene?.nodes, id);
+        if (hit?.kind === NODE_KINDS.image) continue;
+        removeNodeById(id);
+      }
       clearSelection();
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedIds, removeNodeById, clearSelection]);
+  }, [selectedIds, removeNodeById, clearSelection, scene?.nodes]);
 
   if (!scene || !Array.isArray(scene.nodes) || scene.nodes.length === 0) {
     return null;
@@ -153,6 +168,7 @@ function LayerRow({ node, depth, onDelete }) {
   const toggleLocked = useLayersUiStore((s) => s.toggleLocked);
 
   const label = node.legacyName || node.name || meta.label;
+  const showDelete = typeof onDelete === "function" && node.kind !== NODE_KINDS.image;
 
   const handleClick = (e) => {
     if (isLocked) return;
@@ -222,7 +238,7 @@ function LayerRow({ node, depth, onDelete }) {
             {isLocked ? <Lock fontSize="small" /> : <LockOpen fontSize="small" />}
           </IconButton>
         </Tooltip>
-        {typeof onDelete === "function" && (
+        {showDelete && (
           <Tooltip title="Delete" arrow>
             <IconButton
               size="small"

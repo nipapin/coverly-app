@@ -47,7 +47,16 @@ export async function POST(request) {
             .catch((error) => ({ error: error.message }));
 
         if ("error" in geminiResponse) {
-            return NextResponse.json({ error: geminiResponse.error }, {
+            return NextResponse.json({
+                error: geminiResponse.error, generateConfig: {
+                    model: "gemini-3-pro-image-preview",
+                    contents: prompt,
+                    config: {
+                        responseModalities: ["IMAGE"],
+                        candidateCount: 1,
+                    },
+                }
+            }, {
                 status: 500,
                 headers: corsHeaders
             });

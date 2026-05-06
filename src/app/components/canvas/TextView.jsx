@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useFontStore } from "@/app/stores/FontStore";
 import { useSelectionStore, useIsSelected } from "@/app/stores/SelectionStore";
 import { useTextStore } from "@/app/stores/TextStore";
@@ -66,9 +67,11 @@ export default function TextView({ item, parent, path }) {
       offsetY={-texts.offsetY || 0}
       draggable={isSelected}
       onDragStart={(e) => {
+        stampDragAxisAnchor(e.target);
         e.target.attrs._initialX = e.target.x();
         e.target.attrs._initialY = e.target.y();
       }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
       onDragEnd={handleTransformEnd}
       onClick={(e) => selectByEvent(path, e)}
       onTap={(e) => selectByEvent(path, e)}

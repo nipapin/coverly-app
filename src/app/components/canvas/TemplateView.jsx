@@ -7,9 +7,8 @@ import SceneRendererView from "./SceneRendererView";
 
 /**
  * The renderer choice (legacy `LayerView` family vs the new
- * `SceneRendererView`) lives in `RendererStore`. That store seeds itself from
- * the URL params (`?scene=1` / `?scene=0`) and `localStorage`, then gets
- * toggled at runtime from the `Display` settings tab.
+ * `SceneRendererView`) lives in `RendererStore` (`?scene=1` / `?scene=0` or
+ * `localStorage` key `coverly-scene`).
  */
 export default function TemplateView() {
   const { template } = useTemplateStore();

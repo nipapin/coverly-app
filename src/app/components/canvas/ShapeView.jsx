@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useLayoutStore } from "@/app/stores/LayoutStore";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useEffect, useRef } from "react";
@@ -31,6 +32,10 @@ export default function ShapeView({ item, path }) {
 			fill={item.color}
 			nodeKind="shape"
 			draggable={isSelected}
+			onDragStart={(e) => {
+				stampDragAxisAnchor(e.target);
+			}}
+			onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
 			onClick={(e) => selectByEvent(path, e)}
 			onTap={(e) => selectByEvent(path, e)}
 			onDragEnd={handleTransformEnd}

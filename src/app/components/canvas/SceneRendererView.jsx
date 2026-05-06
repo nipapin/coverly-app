@@ -1,9 +1,11 @@
+import { useTransform } from "@/app/hooks/useTransform";
 import { useAssetsStore } from "@/app/stores/AssetsStore";
 import { useFontStore } from "@/app/stores/FontStore";
 import { useLayersUiStore } from "@/app/stores/LayersUiStore";
-import { useSelectionStore } from "@/app/stores/SelectionStore";
+import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
 import { useTextStore } from "@/app/stores/TextStore";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { NODE_KINDS } from "@/lib/scene";
 import { Group, Image as KonvaImage, Rect, Text } from "react-konva";
 import useImage from "use-image";
@@ -236,6 +238,8 @@ function AssetNode({ node }) {
   const flipX = useAssetsStore((s) => s.flipX);
   const flipY = useAssetsStore((s) => s.flipY);
   const selectByEvent = useSelectionStore((s) => s.selectByEvent);
+  const isSelected = useIsSelected(node.id);
+  const { handleTransformEnd } = useTransform();
 
   const legacyKey = node.legacyName ?? node.name;
   const currentAsset = assets?.find?.((a) => a.name === legacyKey) ?? null;
@@ -267,6 +271,14 @@ function AssetNode({ node }) {
       scaleY={flipY ? -1 : 1}
       offsetX={flipX ? img.width : 0}
       offsetY={flipY ? img.height : 0}
+      draggable={isSelected}
+      onDragStart={(e) => {
+        stampDragAxisAnchor(e.target);
+        e.target.attrs._initialX = e.target.x();
+        e.target.attrs._initialY = e.target.y();
+      }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
+      onDragEnd={handleTransformEnd}
       {...selectionHandlers(node.id, selectByEvent)}
     />
   );

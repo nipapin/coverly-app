@@ -295,6 +295,8 @@ export const useTemplateStore = create((set, get) => ({
       const childIdx = Number(childMatch[2]);
       const layer = cur.layers?.[layerIdx];
       if (!layer || !Array.isArray(layer.children)) return false;
+      const child = layer.children[childIdx];
+      if (child?.type === "image") return false;
       const next = {
         ...cur,
         layers: cur.layers.map((l, i) => {
@@ -309,6 +311,7 @@ export const useTemplateStore = create((set, get) => ({
     if (topMatch) {
       const layerIdx = Number(topMatch[1]);
       if (!cur.layers || layerIdx >= cur.layers.length) return false;
+      if (cur.layers[layerIdx]?.type === "image") return false;
       const next = {
         ...cur,
         layers: cur.layers.filter((_, i) => i !== layerIdx),

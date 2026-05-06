@@ -11,18 +11,35 @@ export default function ProjectHistory() {
 
   useEffect(() => {
     if (!open) return;
-    let userID = localStorage.getItem("user-id");
-    if (!userID) {
-      userID = crypto.randomUUID();
-      localStorage.setItem("user-id", userID);
-    }
-    fetch("/api/history", {
-      method: "POST",
-      body: JSON.stringify({ userID }),
-    })
-      .then((res) => res.json())
-      .then((data) => setSessions(data.sessions))
-      .catch((err) => console.error(err));
+    (async () => {
+      let body = {};
+      try {
+        const me = await fetch("/api/auth/me").then((r) => r.json());
+        if (!me.authEnabled || !me.email) {
+          let userID = localStorage.getItem("user-id");
+          if (!userID) {
+            userID = crypto.randomUUID();
+            localStorage.setItem("user-id", userID);
+          }
+          body = { userID };
+        }
+      } catch {
+        let userID = localStorage.getItem("user-id");
+        if (!userID) {
+          userID = crypto.randomUUID();
+          localStorage.setItem("user-id", userID);
+        }
+        body = { userID };
+      }
+      fetch("/api/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+        .then((res) => res.json())
+        .then((data) => setSessions(data.sessions ?? []))
+        .catch((err) => console.error(err));
+    })();
   }, [open]);
 
   return (

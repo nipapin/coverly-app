@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useLayoutStore } from "@/app/stores/LayoutStore";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useEffect, useRef } from "react";
@@ -33,6 +34,10 @@ export default function GroupView({ item, path }) {
       key={item.name}
       nodeKind="group"
       draggable={isSelected}
+      onDragStart={(e) => {
+        stampDragAxisAnchor(e.target);
+      }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
       onClick={(e) => {
         // Only react when the click hits the group background, not a child;
         // child views own their own selection.

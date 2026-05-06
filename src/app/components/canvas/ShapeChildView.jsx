@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useEffect, useRef } from "react";
 import { Rect } from "react-konva";
@@ -58,11 +59,13 @@ export default function ShapeChildView({ item, path }) {
       draggable={isSelected}
       onDragStart={(e) => {
         const t = e.target;
+        stampDragAxisAnchor(t);
         t.attrs._initialX = t.x();
         t.attrs._initialY = t.y();
         t.attrs._initialWidth = t.width() * t.scaleX();
         t.attrs._initialHeight = t.height() * t.scaleY();
       }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
       onClick={(e) => selectByEvent(path, e)}
       onTap={(e) => selectByEvent(path, e)}
       onDragEnd={handleTransformEnd}

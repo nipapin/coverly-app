@@ -10,8 +10,7 @@ import { create } from "zustand";
  *                 may diverge for new node types.
  *
  * The flag persists in `localStorage` so the choice survives reloads. The
- * URL params `?scene=1` / `?scene=0` still work as one-shot overrides — they
- * are read on init and then mirrored back into this store.
+ * URL params `?scene=1` / `?scene=0` work as overrides on first load.
  */
 
 const FLAG_KEY = "coverly-scene";

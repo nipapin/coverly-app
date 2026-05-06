@@ -1,48 +1,13 @@
 import { useAssetsStore } from "@/app/stores/AssetsStore";
 import { useTemplateStore } from "@/app/stores/TemplateStore";
-import { Box, Collapse, FormControlLabel, MenuItem, Select, Slider, Stack, Switch, Typography } from "@mui/material";
-import { useRef, useState } from "react";
-
-const marks = [
-  {
-    value: 0,
-    label: "Start",
-  },
-  {
-    value: 50,
-    label: "Middle",
-  },
-  {
-    value: 100,
-    label: "End",
-  },
-];
+import { Box, Collapse, MenuItem, Select, Stack, Switch, Typography } from "@mui/material";
 
 export default function AssetsTab() {
   const { template, setTemplate } = useTemplateStore();
   const { flipX, flipY, setFlipX, setFlipY } = useAssetsStore();
-  const { position, selectedAsset, setPosition, setSelectedAsset } = useAssetsStore();
+  const { selectedAsset, setSelectedAsset } = useAssetsStore();
   const assetsVariants = template.assetsVariants;
   const allowFlip = template.allowFlip;
-  const frameRef = useRef(false);
-
-  const handleChangePosition = (e) => {
-    if (frameRef.current) return;
-    frameRef.current = true;
-    requestAnimationFrame(() => {
-      setPosition(e.target.value / 100);
-      frameRef.current = false;
-    });
-  };
-  const handleChangeCommittedPosition = (e, newValue) => {
-    if (frameRef.current) return;
-    frameRef.current = true;
-    requestAnimationFrame(() => {
-      setPosition(newValue / 100);
-      setTemplate({ ...template, position: newValue / 100 });
-      frameRef.current = false;
-    });
-  };
 
   const handleChangeSelectedAsset = (e) => {
     setSelectedAsset(e.target.value);
@@ -69,24 +34,16 @@ export default function AssetsTab() {
           </MenuItem>
         ))}
       </Select>
-      <Typography variant="h6">Assets Position</Typography>
-      <Slider
-        step={10}
-        marks
-        min={0}
-        max={100}
-        value={position * 100}
-        onChange={handleChangePosition}
-        onChangeCommitted={handleChangeCommittedPosition}
-        size="small"
-      />
+      <Typography variant="caption" color="text.secondary">
+        Move stickers on the canvas by dragging them when selected.
+      </Typography>
       <Collapse in={allowFlip}>
         <Stack direction={"column"} gap="0.5rem">
-          <Stack direction={"row"} alignItems="center" justifyContent="space-between">
+          <Stack direction={"row"} alignItems={"center"} justifyContent={"space-between"}>
             <Typography>Flip X</Typography>
             <Switch checked={flipX} onChange={handleChangeFlipX} />
           </Stack>
-          <Stack direction={"row"} alignItems="center" justifyContent="space-between">
+          <Stack direction={"row"} alignItems={"center"} justifyContent={"space-between"}>
             <Typography>Flip Y</Typography>
             <Switch checked={flipY} onChange={handleChangeFlipY} />
           </Stack>

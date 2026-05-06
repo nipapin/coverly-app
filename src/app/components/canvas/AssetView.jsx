@@ -1,4 +1,5 @@
 import { useTransform } from "@/app/hooks/useTransform";
+import { constrainDragToDominantAxisIfShift, stampDragAxisAnchor } from "@/app/utilities/shiftAxisDrag";
 import { useAssetsStore } from "@/app/stores/AssetsStore";
 import { useIsSelected, useSelectionStore } from "@/app/stores/SelectionStore";
 import { useMemo } from "react";
@@ -70,9 +71,11 @@ export default function AssetView({ item, path }) {
       onClick={(e) => selectByEvent(path, e)}
       onTap={(e) => selectByEvent(path, e)}
       onDragStart={(e) => {
+        stampDragAxisAnchor(e.target);
         e.target.attrs._initialX = e.target.x();
         e.target.attrs._initialY = e.target.y();
       }}
+      onDragMove={(e) => constrainDragToDominantAxisIfShift(e.target, e.evt)}
       onDragEnd={handleTransformEnd}
     />
   );
